@@ -1,0 +1,6 @@
+{
+  "name": "FUSION ONE",
+  "description": "FUSION ONE - Secondhand Mobile Billing App",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

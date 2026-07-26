@@ -1,0 +1,185 @@
+<div style="width: 794px; min-height: 1123px; position: relative; font-size: 9px; font-family: Helvetica; font-weight: normal; font-style: normal; color: #374151; background-color: #FFFFFF; line-height: 1.5; padding: 40px; padding-bottom: 60px; box-sizing: border-box;">
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
+    <div>
+      <div style="width: 40px; height: 40px; margin-bottom: 8px; display: flex; align-items: flex-start; justify-content: center; box-sizing: border-box;">
+        <!-- IF:store.logo_url -->
+        <img src="{{data.store.logo_url}}" style="width: 40px; height: 40px; object-fit: contain;" />
+        <!-- /IF:store.logo_url -->
+        <!-- IF:!store.logo_url -->
+        <span style="font-size: 24px; font-weight: bold; color: #111827;">{{data.store.name}}</span>
+        <!-- /IF:!store.logo_url -->
+      </div>
+      <div style="font-size: 12px; font-weight: bold; color: #111827; margin-bottom: 4px;">{{data.store.name}}</div>
+      <!-- IF:store.address -->
+      <div style="font-size: 9px; color: #6B7280; margin-bottom: 2px;">{{data.store.address}}</div>
+      <!-- /IF:store.address -->
+      <!-- IF:store.phone -->
+      <div style="font-size: 9px; color: #6B7280; margin-bottom: 2px;">{{data.store.phone}}</div>
+      <!-- /IF:store.phone -->
+      <!-- IF:store.email -->
+      <div style="font-size: 9px; color: #6B7280; margin-bottom: 2px;">{{data.store.email}}</div>
+      <!-- /IF:store.email -->
+      <!-- IF:store.gstin -->
+      <div style="font-size: 9px; color: #6B7280; margin-bottom: 2px;">GSTIN: {{data.store.gstin}}</div>
+      <!-- /IF:store.gstin -->
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+      <div style="font-size: 28px; font-weight: bold; color: #111827; letter-spacing: -0.5px; margin-bottom: 4px;">{{data.title}}</div>
+      <div style="font-size: 10px; color: #6B7280;">#{{data.bill_number}}</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-bottom: 40px;">
+    <div style="width: 45%; box-sizing: border-box;">
+      <!-- IF:type_purchase -->
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Received From</div>
+      <!-- /IF:type_purchase -->
+      <!-- IF:!type_purchase -->
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Bill To</div>
+      <!-- /IF:!type_purchase -->
+      
+      <div style="font-size: 14px; font-weight: bold; color: #111827; margin-bottom: 4px;">{{data.party.name}}</div>
+      
+      <!-- IF:party.address -->
+      <div style="font-size: 9px; color: #374151; margin-bottom: 2px;">{{data.party.address}}</div>
+      <!-- /IF:party.address -->
+      <!-- IF:party.number -->
+      <div style="font-size: 9px; color: #374151; margin-bottom: 2px;">{{data.party.number}}</div>
+      <!-- /IF:party.number -->
+    </div>
+  </div>
+
+  <div style="margin-bottom: 30px; box-sizing: border-box;">
+    <div style="display: flex; flex-direction: row; border-bottom: 1px solid #D1D5DB; padding-bottom: 8px; margin-bottom: 8px; box-sizing: border-box;">
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 45%; text-align: left; box-sizing: border-box;">Description</div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 10%; text-align: center; box-sizing: border-box;">Qty</div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%; text-align: right; box-sizing: border-box;">Rate</div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%; text-align: right; box-sizing: border-box;">Discount</div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%; text-align: right; box-sizing: border-box;">Amount</div>
+    </div>
+
+    <!-- LOOP:items -->
+    <div style="display: flex; flex-direction: row; padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid #F3F4F6; box-sizing: border-box;">
+      <div style="width: 45%; box-sizing: border-box;">
+        <div style="font-size: 10px; font-weight: bold; color: #111827; margin-bottom: 2px;">{{item.description}}</div>
+        <!-- IF:item.sub_description -->
+        <div style="font-size: 8px; color: #6B7280;">{{item.sub_description}}</div>
+        <!-- /IF:item.sub_description -->
+      </div>
+      <div style="font-size: 9px; color: #111827; width: 10%; text-align: center; box-sizing: border-box;">{{item.qty}}</div>
+      <div style="font-size: 9px; color: #111827; width: 15%; text-align: right; box-sizing: border-box;">{{item.rate}}</div>
+      <div style="font-size: 9px; color: #111827; width: 15%; text-align: right; box-sizing: border-box;">{{item.discount}}</div>
+      <div style="font-size: 9px; color: #111827; width: 15%; text-align: right; box-sizing: border-box;">{{item.value}}</div>
+    </div>
+    <!-- /LOOP:items -->
+  </div>
+
+  <!-- IF:trade_ins -->
+  <div style="margin-bottom: 30px; box-sizing: border-box;">
+    <div style="margin-top: 20px; margin-bottom: 10px; display: flex; flex-direction: row; box-sizing: border-box;">
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Trade-In Deductions</div>
+    </div>
+    <div style="display: flex; flex-direction: row; border-bottom: 1px solid #D1D5DB; padding-bottom: 8px; margin-bottom: 8px; box-sizing: border-box;">
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 45%; text-align: left; box-sizing: border-box;">Item</div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 10%; text-align: center; box-sizing: border-box;">Qty</div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%; text-align: center; box-sizing: border-box;"> </div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%; text-align: center; box-sizing: border-box;"> </div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; width: 15%; text-align: right; box-sizing: border-box;">Credit</div>
+    </div>
+
+    <!-- LOOP:trade_ins -->
+    <div style="display: flex; flex-direction: row; padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid #F3F4F6; box-sizing: border-box;">
+      <div style="width: 45%; box-sizing: border-box;">
+        <div style="font-size: 10px; font-weight: bold; color: #111827; margin-bottom: 2px;">{{item.description}}</div>
+        <!-- IF:item.imei -->
+        <div style="font-size: 8px; color: #6B7280;">IMEI: {{item.imei}}</div>
+        <!-- /IF:item.imei -->
+      </div>
+      <div style="font-size: 9px; color: #111827; width: 10%; text-align: center; box-sizing: border-box;">{{item.qty}}</div>
+      <div style="font-size: 9px; color: #111827; width: 15%; text-align: center; box-sizing: border-box;"> </div>
+      <div style="font-size: 9px; color: #111827; width: 15%; text-align: center; box-sizing: border-box;"> </div>
+      <div style="font-size: 9px; color: #111827; width: 15%; text-align: right; box-sizing: border-box;">{{item.credit_value}}</div>
+    </div>
+    <!-- /LOOP:trade_ins -->
+  </div>
+  <!-- /IF:trade_ins -->
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 10px;">
+    <div style="width: 45%; box-sizing: border-box;">
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Amount in Words</div>
+      <div style="font-size: 9px; font-style: italic; color: #374151; margin-bottom: 15px;">{{data.amount_in_words}}</div>
+      <div style="font-size: 8px; font-weight: bold; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Terms</div>
+      <div style="font-size: 9px; color: #374151; margin-bottom: 4px; line-height: 1.4;">1. Goods once sold will not be taken back or exchanged.</div>
+      <div style="font-size: 9px; color: #374151; margin-bottom: 4px; line-height: 1.4;">2. Warranty as per manufacturer terms.</div>
+    </div>
+
+    <div style="width: 40%; box-sizing: border-box;">
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 6px; padding-bottom: 6px;">
+        <div style="font-size: 9px; color: #6B7280;">Subtotal</div>
+        <div style="font-size: 9px; color: #111827;">{{data.subtotal}}</div>
+      </div>
+
+      <!-- IF:item_discount -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 6px; padding-bottom: 6px;">
+        <div style="font-size: 9px; color: #6B7280;">Product Discount</div>
+        <div style="font-size: 9px; color: #111827;">&minus; {{data.item_discount}}</div>
+      </div>
+      <!-- /IF:item_discount -->
+
+      <!-- IF:additional_discount -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 6px; padding-bottom: 6px;">
+        <div style="font-size: 9px; color: #6B7280;">Additional Discount</div>
+        <div style="font-size: 9px; color: #111827;">&minus; {{data.additional_discount}}</div>
+      </div>
+      <!-- /IF:additional_discount -->
+
+      <!-- IF:discount -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 6px; padding-bottom: 6px;">
+        <div style="font-size: 9px; font-weight: bold; color: #6B7280;">Total Discount</div>
+        <div style="font-size: 9px; font-weight: bold; color: #111827;">&minus; {{data.discount}}</div>
+      </div>
+      <!-- /IF:discount -->
+
+      <!-- IF:trade_in_credit -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 6px; padding-bottom: 6px;">
+        <div style="font-size: 9px; color: #6B7280;">Trade-In Credit</div>
+        <div style="font-size: 9px; color: #111827;">&minus; {{data.trade_in_credit}}</div>
+      </div>
+      <!-- /IF:trade_in_credit -->
+
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 12px; padding-bottom: 12px; border-top: 1px solid #D1D5DB; border-bottom: 1px solid #D1D5DB; margin-top: 6px; margin-bottom: 6px; box-sizing: border-box;">
+        <div style="font-size: 12px; font-weight: bold; color: #111827;">Total Due</div>
+        <div style="font-size: 12px; font-weight: bold; color: #111827;">{{data.final_total}}</div>
+      </div>
+
+      <!-- IF:type_not_proforma -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 6px; padding-bottom: 6px;">
+        <div style="font-size: 9px; color: #6B7280;">Amount Paid</div>
+        <div style="font-size: 9px; color: #111827;">{{data.paid}}</div>
+      </div>
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 6px; padding-bottom: 6px;">
+        <div style="font-size: 9px; font-weight: bold; color: #111827;">Balance</div>
+        <div style="font-size: 9px; font-weight: bold; color: #111827;">{{data.due}}</div>
+      </div>
+      <!-- /IF:type_not_proforma -->
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; display: flex; flex-direction: column; align-items: flex-end;">
+    <div style="width: 140px; box-sizing: border-box;">
+      <!-- IF:store.signature_url -->
+      <img src="{{data.store.signature_url}}" style="width: 100px; height: 35px; object-fit: contain; margin-bottom: 4px; align-self: flex-end; display: block; margin-left: auto;" />
+      <!-- /IF:store.signature_url -->
+      <div style="width: 100%; border-top: 1px solid #D1D5DB; margin-bottom: 6px; box-sizing: border-box;"></div>
+      <div style="font-size: 10px; font-weight: bold; color: #111827; text-align: right;">{{data.store.name}}</div>
+      <div style="font-size: 8px; color: #6B7280; text-align: right;">Authorized Signatory</div>
+    </div>
+  </div>
+
+  <div style="position: absolute; bottom: 30px; left: 40px; right: 40px; text-align: center;">
+    <div style="font-size: 8px; color: #6B7280;">This is a computer-generated invoice. No signature required if digitally authenticated.</div>
+  </div>
+
+</div>

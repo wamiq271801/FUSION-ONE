@@ -1,0 +1,182 @@
+<div style="width: 794px; min-height: 1123px; position: relative; font-size: 8px; font-family: Helvetica; font-weight: normal; font-style: normal; color: #222222; background-color: #FFFFFF; line-height: 1.3; padding: 20px; padding-bottom: 40px; box-sizing: border-box;">
+
+  <div style="display: flex; flex-direction: row; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 10px; box-sizing: border-box;">
+    <div style="width: 50px; height: 50px; margin-right: 10px; display: flex; justify-content: center; align-items: center; box-sizing: border-box;">
+      <!-- IF:store.logo_url -->
+      <img src="{{data.store.logo_url}}" style="width: 50px; height: 50px; object-fit: contain;" />
+      <!-- /IF:store.logo_url -->
+      <!-- IF:!store.logo_url -->
+      <span style="font-size: 16px; font-weight: bold;">{{data.store.name}}</span>
+      <!-- /IF:!store.logo_url -->
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+      <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{data.store.name}}</div>
+      <!-- IF:store.address -->
+      <div style="font-size: 8px; color: #555555;">{{data.store.address}}</div>
+      <!-- /IF:store.address -->
+      <div style="font-size: 8px; color: #555555;">
+        <!-- IF:store.phone -->Ph: {{data.store.phone}}<!-- /IF:store.phone --><!-- IF:store.email --> | Email: {{data.store.email}}<!-- /IF:store.email --><!-- IF:store.gstin --> | GSTIN: {{data.store.gstin}}<!-- /IF:store.gstin -->
+      </div>
+    </div>
+    <div style="width: 120px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; box-sizing: border-box;">
+      <div style="font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;">{{data.title}}</div>
+      <div style="font-size: 9px; font-weight: bold;">No: {{data.bill_number}}</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: row; margin-bottom: 10px; box-sizing: border-box;">
+    <div style="flex: 1; border: 1px solid #000000; padding: 5px; margin-right: 5px; box-sizing: border-box;">
+      <!-- IF:type_purchase -->
+      <div style="font-size: 7px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #CCCCCC; padding-bottom: 2px; margin-bottom: 3px;">Supplier Details</div>
+      <!-- /IF:type_purchase -->
+      <!-- IF:!type_purchase -->
+      <div style="font-size: 7px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #CCCCCC; padding-bottom: 2px; margin-bottom: 3px;">Customer Details</div>
+      <!-- /IF:!type_purchase -->
+      <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">{{data.party.name}}</div>
+      <!-- IF:party.number -->
+      <div style="font-size: 8px; margin-bottom: 1px;">Ph: {{data.party.number}}</div>
+      <!-- /IF:party.number -->
+      <!-- IF:party.address -->
+      <div style="font-size: 8px; margin-bottom: 1px;">{{data.party.address}}</div>
+      <!-- /IF:party.address -->
+    </div>
+    <div style="flex: 1; border: 1px solid #000000; padding: 5px; margin-right: 0px; box-sizing: border-box;">
+      <div style="font-size: 7px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #CCCCCC; padding-bottom: 2px; margin-bottom: 3px;">Invoice Details</div>
+      <div style="font-size: 8px; margin-bottom: 1px;">Date: {{data.date}}</div>
+    </div>
+  </div>
+
+  <div style="border: 1px solid #000000; margin-bottom: 10px; box-sizing: border-box;">
+    <div style="display: flex; flex-direction: row; background-color: #E8E8E8; border-bottom: 1px solid #000000; box-sizing: border-box;">
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: center; width: 4%; box-sizing: border-box;">#</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: left; width: 46%; box-sizing: border-box;">Item Description</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: center; width: 8%; box-sizing: border-box;">Qty</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: right; width: 14%; box-sizing: border-box;">MRP</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: right; width: 14%; box-sizing: border-box;">Discount</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 0px; font-size: 7px; font-weight: bold; text-align: right; width: 14%; box-sizing: border-box;">Amount</div>
+    </div>
+
+    <!-- LOOP:items -->
+    <div style="display: flex; flex-direction: row; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: center; width: 4%; box-sizing: border-box;">{{item.index}}</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; width: 46%; box-sizing: border-box;">
+        <div style="font-size: 8px; font-weight: bold; margin-bottom: 1px;">{{item.description}}</div>
+        <!-- IF:item.sub_description -->
+        <div style="font-size: 7px; color: #555555;">{{item.sub_description}}</div>
+        <!-- /IF:item.sub_description -->
+      </div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: center; width: 8%; box-sizing: border-box;">{{item.qty}}</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: right; width: 14%; box-sizing: border-box;">{{item.rate}}</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: right; width: 14%; box-sizing: border-box;">{{item.discount}}</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 0px; font-size: 8px; text-align: right; width: 14%; box-sizing: border-box;">{{item.value}}</div>
+    </div>
+    <!-- /LOOP:items -->
+  </div>
+
+  <!-- IF:trade_ins -->
+  <div style="border: 1px solid #000000; margin-bottom: 10px; box-sizing: border-box;">
+    <div style="display: flex; flex-direction: row; background-color: #E8E8E8; border-bottom: 1px solid #000000; box-sizing: border-box;">
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: center; width: 4%; box-sizing: border-box;">#</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: left; width: 46%; box-sizing: border-box;">Trade-In Items</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: center; width: 8%; box-sizing: border-box;">Qty</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: center; width: 14%; box-sizing: border-box;"> </div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #000000; font-size: 7px; font-weight: bold; text-align: center; width: 14%; box-sizing: border-box;"> </div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 0px; font-size: 7px; font-weight: bold; text-align: right; width: 14%; box-sizing: border-box;">Credit Value</div>
+    </div>
+
+    <!-- LOOP:trade_ins -->
+    <div style="display: flex; flex-direction: row; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: center; width: 4%; box-sizing: border-box;">{{item.index}}</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; width: 46%; box-sizing: border-box;">
+        <div style="font-size: 8px; font-weight: bold; margin-bottom: 1px;">{{item.description}}</div>
+        <!-- IF:item.imei -->
+        <div style="font-size: 7px; color: #555555;">IMEI: {{item.imei}}</div>
+        <!-- /IF:item.imei -->
+      </div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: center; width: 8%; box-sizing: border-box;">{{item.qty}}</div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: center; width: 14%; box-sizing: border-box;"> </div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 1px solid #CCCCCC; font-size: 8px; text-align: center; width: 14%; box-sizing: border-box;"> </div>
+      <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 2px; padding-right: 2px; border-right: 0px; font-size: 8px; text-align: right; width: 14%; box-sizing: border-box;">{{item.credit_value}}</div>
+    </div>
+    <!-- /LOOP:trade_ins -->
+  </div>
+  <!-- /IF:trade_ins -->
+
+  <div style="display: flex; flex-direction: row; box-sizing: border-box;">
+    <div style="width: 60%; border: 1px solid #000000; padding: 5px; margin-right: 5px; box-sizing: border-box;">
+      <div style="font-size: 7px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">Amount in Words</div>
+      <div style="font-size: 8px; font-style: italic; margin-bottom: 6px;">{{data.amount_in_words}}</div>
+      
+      <div style="font-size: 7px; font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">Terms &amp; Conditions</div>
+      <div style="font-size: 7px; color: #555555;">1. Goods once sold will not be taken back or exchanged.</div>
+      <div style="font-size: 7px; color: #555555;">2. Warranty as per manufacturer terms.</div>
+      <div style="font-size: 7px; color: #555555;">3. Thank you for doing business with us.</div>
+    </div>
+
+    <div style="width: 40%; border: 1px solid #000000; box-sizing: border-box;">
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 3px; padding-bottom: 3px; padding-left: 5px; padding-right: 5px; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+        <div style="font-size: 8px;">Subtotal</div>
+        <div style="font-size: 8px; font-weight: bold;">{{data.subtotal}}</div>
+      </div>
+      <!-- IF:item_discount -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 3px; padding-bottom: 3px; padding-left: 5px; padding-right: 5px; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+        <div style="font-size: 8px;">Product Discount</div>
+        <div style="font-size: 8px; font-weight: bold;">&minus; {{data.item_discount}}</div>
+      </div>
+      <!-- /IF:item_discount -->
+
+      <!-- IF:additional_discount -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 3px; padding-bottom: 3px; padding-left: 5px; padding-right: 5px; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+        <div style="font-size: 8px;">Additional Discount</div>
+        <div style="font-size: 8px; font-weight: bold;">&minus; {{data.additional_discount}}</div>
+      </div>
+      <!-- /IF:additional_discount -->
+
+      <!-- IF:discount -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 3px; padding-bottom: 3px; padding-left: 5px; padding-right: 5px; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+        <div style="font-size: 8px; font-weight: bold;">Total Discount</div>
+        <div style="font-size: 8px; font-weight: bold;">&minus; {{data.discount}}</div>
+      </div>
+      <!-- /IF:discount -->
+
+      <!-- IF:trade_in_credit -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 3px; padding-bottom: 3px; padding-left: 5px; padding-right: 5px; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+        <div style="font-size: 8px;">Trade-In Deduction</div>
+        <div style="font-size: 8px; font-weight: bold;">&minus; {{data.trade_in_credit}}</div>
+      </div>
+      <!-- /IF:trade_in_credit -->
+
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 4px; padding-bottom: 4px; padding-left: 5px; padding-right: 5px; backgroundColor: #E8E8E8; border-bottom: 1px solid #000000; box-sizing: border-box;">
+        <div style="font-size: 9px; font-weight: bold;">Net Total</div>
+        <div style="font-size: 9px; font-weight: bold;">{{data.final_total}}</div>
+      </div>
+
+      <!-- IF:type_not_proforma -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 3px; padding-bottom: 3px; padding-left: 5px; padding-right: 5px; border-bottom: 1px solid #CCCCCC; box-sizing: border-box;">
+        <div style="font-size: 8px;">Amount Received</div>
+        <div style="font-size: 8px; font-weight: bold;">{{data.paid}}</div>
+      </div>
+      <div style="display: flex; flex-direction: row; justify-content: space-between; padding-top: 3px; padding-bottom: 3px; padding-left: 5px; padding-right: 5px; box-sizing: border-box;">
+        <div style="font-size: 8px; font-weight: bold;">Balance Due</div>
+        <div style="font-size: 8px; font-weight: bold;">{{data.due}}</div>
+      </div>
+      <!-- /IF:type_not_proforma -->
+    </div>
+  </div>
+
+  <div style="margin-top: 15px; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-end; box-sizing: border-box;">
+    <div>
+    </div>
+    <div style="width: 120px; position: relative; box-sizing: border-box;">
+      <!-- IF:store.signature_url -->
+      <img src="{{data.store.signature_url}}" style="width: 80px; height: 25px; object-fit: contain; position: absolute; bottom: 15px; left: 20px;" />
+      <!-- /IF:store.signature_url -->
+      <div style="font-size: 8px; font-weight: bold; text-align: center; margin-top: 30px; border-top: 1px solid #000000; padding-top: 2px; width: 120px; box-sizing: border-box;">Authorized Signatory</div>
+    </div>
+  </div>
+
+  <div style="position: absolute; bottom: 15px; left: 20px; right: 20px; text-align: center; font-size: 7px; color: #555555;">
+    This is a computer-generated invoice. No signature required if digitally authenticated.
+  </div>
+
+</div>
