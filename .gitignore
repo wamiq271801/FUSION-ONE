@@ -1,0 +1,58 @@
+# ==========================================
+# 1. Packages & Dependencies
+# ==========================================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# ==========================================
+# 2. Next.js Build Outputs & Cache
+# ==========================================
+.next/
+out/
+build/
+dist/
+tsconfig.tsbuildinfo
+
+# ==========================================
+# 3. Environment & Local Configuration Files
+# ==========================================
+.env*
+!.env.example
+
+# ==========================================
+# 4. WhatsApp Backend (wa-backend)
+# ==========================================
+wa-backend/
+
+# ==========================================
+# 5. Windows Desktop Host Source & Build Outputs
+# ==========================================
+windows/
+Installer.iss
+Output/
+scripts/
+
+# ==========================================
+# 6. Logs & Debugging
+# ==========================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================
+# 7. OS & IDE System Files
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.user
+*.userossc
+*.sln.docstates
+

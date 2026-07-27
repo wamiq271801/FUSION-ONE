@@ -1,0 +1,373 @@
+You are a principal software architect and senior Next.js engineer specializing in large-scale production modernization.
+
+Phase 1 has already been completed.
+
+The project has been cleaned of obsolete desktop architecture, the external WhatsApp backend, the HTML invoice pipeline, the stored PDF pipeline, and unnecessary dependencies.
+
+Your task is to COMPLETE Phase 2.
+
+This is an implementation task.
+
+Do NOT create plans.
+
+Do NOT create documentation.
+
+Do NOT create markdown files.
+
+Do NOT explain architecture.
+
+Implement the modernization directly.
+
+---
+
+# Phase 2 Objective
+
+Modernize the entire project using official Next.js best practices WITHOUT changing any required business functionality.
+
+The application should behave exactly the same from the user's perspective.
+
+The objective is NOT feature development.
+
+The objective is architectural modernization.
+
+If the existing functionality works, preserve it.
+
+Only improve the implementation.
+
+---
+
+# Core Principle
+
+Modernize implementation.
+
+Preserve behavior.
+
+Improve maintainability.
+
+Reduce complexity.
+
+Do NOT introduce regressions.
+
+The application should look and behave the same while the internal architecture becomes significantly cleaner.
+
+---
+
+# Modernization Goals
+
+Transform the project into a production-grade Next.js application.
+
+The codebase should feel like it was originally designed around official Next.js architecture instead of evolving through multiple legacy systems.
+
+Every change should improve:
+
+- maintainability
+- scalability
+- readability
+- consistency
+- developer experience
+- production reliability
+
+without changing business logic.
+
+---
+
+# Modernize the Project Structure
+
+Reorganize the project where necessary to better follow Next.js conventions.
+
+Separate:
+
+- UI
+- server logic
+- business logic
+- reusable libraries
+- infrastructure
+- shared utilities
+
+Avoid dumping unrelated code into generic folders.
+
+Every module should have a single responsibility.
+
+---
+
+# Modernize Next.js Usage
+
+Use official App Router best practices wherever appropriate.
+
+Improve:
+
+- Server Components
+- Client Components
+- Route Handlers
+- Server Actions
+- layouts
+- loading UI
+- error boundaries
+- metadata
+- dynamic imports where beneficial
+
+Do not introduce unnecessary complexity.
+
+---
+
+# Improve Server Architecture
+
+Separate infrastructure from business logic.
+
+Server code should be cleanly organized.
+
+Move server-only code away from client code.
+
+Avoid leaking server implementation into UI components.
+
+---
+
+# Improve Client Architecture
+
+Reduce unnecessary client-side state.
+
+Prefer server rendering whenever practical.
+
+Remove unnecessary prop drilling.
+
+Improve component composition.
+
+Reduce duplicated UI logic.
+
+Improve code readability.
+
+---
+
+# Improve Shared Code
+
+Consolidate duplicated:
+
+- utilities
+- helpers
+- validation
+- formatting
+- types
+- constants
+
+Avoid duplicate implementations.
+
+---
+
+# Improve Feature Boundaries
+
+Each feature should own:
+
+- UI
+- business logic
+- hooks
+- components
+- server actions (if applicable)
+
+Avoid tight coupling between unrelated features.
+
+---
+
+# Improve Type Safety
+
+Strengthen TypeScript.
+
+Remove:
+
+- any
+- unsafe casts
+- duplicated interfaces
+- inconsistent models
+
+Improve inference wherever possible.
+
+---
+
+# Improve Data Flow
+
+Simplify data flow.
+
+Avoid unnecessary transformations.
+
+Reduce intermediate models.
+
+Prefer predictable flow from:
+
+Database
+
+↓
+
+Business Logic
+
+↓
+
+UI
+
+---
+
+# Improve Performance
+
+Without changing functionality:
+
+- reduce unnecessary renders
+- reduce unnecessary client bundles
+- remove dead imports
+- lazy load where appropriate
+- improve memoization only where beneficial
+- eliminate unnecessary work
+
+Do not prematurely optimize.
+
+---
+
+# Improve Configuration
+
+Modernize:
+
+- tsconfig
+- eslint
+- next.config
+- scripts
+- environment handling
+
+Remove outdated configuration.
+
+Follow official recommendations.
+
+---
+
+# Improve Code Quality
+
+Throughout the project:
+
+- simplify overly complex code
+- remove duplicated logic
+- improve naming
+- improve consistency
+- reduce nesting
+- simplify conditionals
+- simplify component structure
+
+Prefer clarity over cleverness.
+
+---
+
+# Preserve Existing Functionality
+
+The following functionality must remain exactly as it currently works:
+
+- authentication
+- dashboard
+- inventory
+- parties
+- accounts
+- sales
+- purchases
+- proformas
+- invoice generation
+- invoice PDF export
+- reports
+- settings
+- every business workflow
+
+Do NOT redesign features.
+
+Do NOT remove functionality.
+
+Do NOT modify business rules.
+
+Modernize implementation only.
+
+---
+
+# Refactoring Rules
+
+Do not create compatibility layers.
+
+Do not leave deprecated code.
+
+Do not comment out code.
+
+Delete obsolete implementations completely.
+
+If something can be simplified safely,
+
+simplify it.
+
+If something is duplicated,
+
+consolidate it.
+
+If something is unnecessarily complicated,
+
+rewrite it.
+
+---
+
+# Validation
+
+Continuously ensure:
+
+- project builds successfully
+- types remain correct
+- lint passes
+- existing functionality continues working
+
+Fix issues immediately.
+
+Do not defer fixes.
+
+---
+
+# Things You MUST NOT Do
+
+Do NOT implement Baileys.
+
+Do NOT redesign invoices.
+
+Do NOT modify the React PDF renderer.
+
+Do NOT add PNG generation.
+
+Do NOT change business logic.
+
+Do NOT add new features.
+
+Do NOT write documentation.
+
+Do NOT generate markdown files.
+
+Do NOT create migration guides.
+
+Do NOT produce implementation summaries.
+
+Focus entirely on modernizing the existing codebase.
+
+---
+
+# Completion Criteria
+
+Phase 2 is complete only when all of the following are true:
+
+✓ The project follows modern Next.js architecture.
+
+✓ Server and client responsibilities are clearly separated.
+
+✓ The codebase is significantly cleaner and easier to maintain.
+
+✓ Duplicated logic has been consolidated.
+
+✓ Shared code has been improved.
+
+✓ Feature boundaries are clearer.
+
+✓ Type safety has been improved.
+
+✓ Configuration follows modern best practices.
+
+✓ Performance has improved where appropriate.
+
+✓ Every existing feature continues working exactly as before.
+
+✓ The project builds successfully with zero regressions.
+
+Do not stop until every requirement above has been fully satisfied.
