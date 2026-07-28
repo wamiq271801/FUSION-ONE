@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTransactions } from '@/platform/services/accounts';
+import { createClient } from '@/platform/supabase/server';
 
 export async function GET(req: NextRequest) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams }  = new URL(req.url);
     const bank_account_id   = searchParams.get('bank_account_id');

@@ -7,7 +7,8 @@ import {
   RefreshCcw, Landmark, Calendar, Settings, Smartphone, LogOut,
 } from 'lucide-react';
 import { cn } from '@/shared/utils/utils';
-import { useAuth } from '@/shared/providers/AuthProvider';
+import { useSession } from '@/shared/providers/SessionProvider';
+
 
 const navigation = [
   { name: 'Dashboard',       href: '/dashboard',       icon: Home        },
@@ -25,7 +26,8 @@ const navigation = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, signOut } = useSession();
+
 
   return (
     <div className="flex flex-col w-56 bg-white border-r border-slate-200 shrink-0">

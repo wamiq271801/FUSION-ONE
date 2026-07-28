@@ -1,40 +1,48 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { ToastProvider } from '../ui/Toast';
-import { AuthProvider } from '@/shared/providers/AuthProvider';
+import { SessionProvider } from '@/shared/providers/SessionProvider';
 import { FinancialYearProvider } from '@/shared/providers/FinancialYearProvider';
 import QueryProvider from '@/shared/providers/QueryProvider';
 
-export default function AppShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const isAuthOrOnboardingPage = pathname === '/login' || pathname === '/onboarding';
+interface SessionUser {
+  id: string;
+  email: string;
+}
 
+interface AppShellProps {
+  user: SessionUser;
+  children: ReactNode;
+}
+
+/**
+ * AppShell wraps all authenticated pages with the full layout and providers.
+ *
+ * The user is passed from the server layout (app/(app)/layout.tsx) which
+ * reads it from the session cookie. AppShell does not make any auth decisions —
+ * it only renders the layout and provides the user to client components via
+ * SessionProvider.
+ */
+export default function AppShell({ user, children }: AppShellProps) {
   return (
     <ToastProvider>
       <QueryProvider>
-        <AuthProvider>
+        <SessionProvider user={user}>
           <FinancialYearProvider>
-            {isAuthOrOnboardingPage ? (
-              children
-            ) : (
-              <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
-                <Sidebar />
-                <div className="flex flex-col flex-1 overflow-hidden">
-                  <Header />
-                  <main className="flex-1 overflow-y-auto p-6 md:p-8">
-                    <div className="max-w-7xl mx-auto w-full">
-                      {children}
-                    </div>
-                  </main>
-                </div>
+            <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+              <Sidebar />
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <Header />
+                <main className="flex-1 overflow-y-auto p-6 md:p-8">
+                  <div className="max-w-7xl mx-auto w-full">{children}</div>
+                </main>
               </div>
-            )}
+            </div>
           </FinancialYearProvider>
-        </AuthProvider>
+        </SessionProvider>
       </QueryProvider>
     </ToastProvider>
   );

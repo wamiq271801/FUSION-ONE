@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/platform/supabase/client';
-import { useAuth } from '@/shared/providers/AuthProvider';
+import { useSession } from '@/shared/providers/SessionProvider';
 import type { TemplateVariant } from '@/domains/invoice/types';
 
 export type InvoiceType = 'sale' | 'purchase' | 'proforma';
@@ -21,7 +21,7 @@ const DEFAULT_TEMPLATES: StoreTemplates = {
 };
 
 export function useStoreTemplates() {
-  const { user } = useAuth();
+  const { user } = useSession();
   const queryClient = useQueryClient();
 
   const query = useQuery({

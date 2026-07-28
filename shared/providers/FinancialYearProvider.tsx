@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/platform/supabase/client';
-import { useAuth } from '@/shared/providers/AuthProvider';
 
 export interface FinancialYear {
   id: string;
@@ -32,8 +31,6 @@ const FinancialYearContext = createContext<FinancialYearContextType>({
 export const useFinancialYear = () => useContext(FinancialYearContext);
 
 export function FinancialYearProvider({ children }: { children: React.ReactNode }) {
-  const { user, isOwner } = useAuth();
-  const userId = user?.id ?? null;
   const [financialYears, setFinancialYears] = useState<FinancialYear[]>([]);
   const [selectedYearId, setSelectedYearIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,11 +41,6 @@ export function FinancialYearProvider({ children }: { children: React.ReactNode 
   const hasLoadedRef = React.useRef(false);
 
   const loadFinancialYears = useCallback(async () => {
-    if (!userId || !isOwner) {
-      setIsLoading(false);
-      return;
-    }
-
     // Only show the loading indicator on the very first load.
     // Subsequent refreshes run silently so pages don't flash skeletons.
     if (!hasLoadedRef.current) {
@@ -98,9 +90,7 @@ export function FinancialYearProvider({ children }: { children: React.ReactNode 
       hasLoadedRef.current = true;
       setIsLoading(false);
     }
-  // Depend on userId (stable string) instead of the user object reference,
-  // which Supabase recreates on token refresh / tab focus.
-  }, [userId, isOwner]);
+  }, []);
 
   useEffect(() => {
     loadFinancialYears();

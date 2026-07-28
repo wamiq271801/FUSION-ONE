@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { transferFunds } from '@/platform/services/accounts';
+import { createClient } from '@/platform/supabase/server';
 
 export async function POST(req: NextRequest) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { from_bank_account_id, to_bank_account_id, amount, date, notes, financial_year_id } = body;
