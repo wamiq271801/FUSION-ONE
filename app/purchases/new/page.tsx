@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useFormData } from '@/hooks/use-form-data';
+import { createPurchase } from '@/features/purchases/mutations';
 
 interface PhoneItem {
   id: string; // temp id for UI list
@@ -121,123 +121,17 @@ export default function NewPurchasePage() {
 
     setIsSaving(true);
     try {
-        // 1. Check for duplicate IMEI in DB
-        const { data: dupCheck, error: dupErr } = await supabase
-            .from('inventory_items')
-            .select('imei')
-            .in('imei', Array.from(uniqueImeis))
-            .eq('status', 'in_stock');
-        
-        if (dupErr) throw dupErr;
-        if (dupCheck && dupCheck.length > 0) {
-            error('Validation', `IMEI ${dupCheck[0].imei} is already in stock in the database.`);
-            setIsSaving(false);
-            return;
-        }
-
-        // 2. Safely get and increment counter
-        const { data: fyData, error: fyErr } = await supabase
-            .from('financial_years')
-            .select('start_date, end_date, purchase_counter')
-            .eq('id', selectedYear.id)
-            .single();
-        if (fyErr) throw fyErr;
-
-        const currentCounter = fyData.purchase_counter;
-        const nextCounter = currentCounter + 1;
-        const sYear = new Date(fyData.start_date).getFullYear();
-        const eYear = new Date(fyData.end_date).getFullYear().toString().slice(-2);
-        const billNumber = `PUR-${sYear}-${eYear}-${nextCounter.toString().padStart(4, '0')}`;
-
-        // Attempt to update counter (optimistic lock pattern not strictly needed here as we are single-owner, but good practice. We'll just do simple update)
-        const { error: updFyErr } = await supabase
-            .from('financial_years')
-            .update({ purchase_counter: nextCounter })
-            .eq('id', selectedYear.id);
-        if (updFyErr) throw updFyErr;
-
-        // 3. Create purchase
-        const { data: purchaseData, error: purchaseErr } = await supabase
-            .from('purchases')
-            .insert({
-                bill_number: billNumber,
-                party_id: partyId,
-                total: total,
-                paid: nPaid,
-                due: due,
-                bank_account_id: bankAccountId || bankAccounts[0].id, // fallback just in case, DB requires it 
-                payment_mode_id: paymentModeId || null,
-                date: date,
-                financial_year_id: selectedYear.id,
-                status: 'active'
-            })
-            .select('id')
-            .single();
-        if (purchaseErr) throw purchaseErr;
-
-        // 4. Create inventory items
-        const preparedItems = items.map(item => ({
-            brand: item.brand.trim(),
-            model: item.model.trim(),
-            imei: item.imei.trim(),
-            ram_rom: item.ram_rom.trim(),
-            color: item.color.trim(),
-            purchase_price: Number(item.purchase_price),
-            base_selling_price: Number(item.base_selling_price),
-            status: 'in_stock',
-            source: 'purchase',
-            financial_year_id: selectedYear.id,
-            opening_entry_type: 'direct'
-        }));
-
-        const { data: addedItemsData, error: invErr } = await supabase
-            .from('inventory_items')
-            .insert(preparedItems)
-            .select('id');
-        if (invErr) throw invErr;
-
-        // 5. Create purchase_items mappings
-        const purchaseItemsData = addedItemsData.map(ai => ({
-            purchase_id: purchaseData.id,
-            inventory_item_id: ai.id
-        }));
-
-        const { error: piErr } = await supabase
-            .from('purchase_items')
-            .insert(purchaseItemsData);
-        if (piErr) throw piErr;
-
-        // 6. Handle Payment transactions
-        if (nPaid > 0) {
-            // Money goes out, so it's a 'debit' entry in that account
-            const { error: atErr } = await supabase
-                .from('account_transactions')
-                .insert({
-                    bank_account_id: bankAccountId,
-                    payment_mode_id: paymentModeId || null,
-                    type: 'debit',
-                    amount: nPaid,
-                    date: date,
-                    reference_type: 'purchase',
-                    reference_id: purchaseData.id,
-                    financial_year_id: selectedYear.id
-                });
-            if (atErr) throw atErr;
-
-            // Also create payments_out record for payment history
-            const { error: poErr } = await supabase
-                .from('payments_out')
-                .insert({
-                    purchase_id: purchaseData.id,
-                    party_id: partyId,
-                    amount: nPaid,
-                    bank_account_id: bankAccountId,
-                    payment_mode_id: paymentModeId || null,
-                    date: date,
-                    financial_year_id: selectedYear.id
-                });
-            if (poErr) throw poErr;
-        }
+        const { purchaseId, billNumber } = await createPurchase({
+          partyId,
+          date,
+          items,
+          total,
+          paid: nPaid,
+          due,
+          bankAccountId: bankAccountId || bankAccounts[0].id,
+          paymentModeId,
+          financialYear: selectedYear,
+        });
 
         success('Success', `Purchase ${billNumber} created!`);
         await Promise.all([
@@ -249,11 +143,11 @@ export default function NewPurchasePage() {
           queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
         ]);
 
-        router.push(`/purchases/${purchaseData.id}`);
+        router.push(`/purchases/${purchaseId}`);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         setIsSaving(false);
-        error('Error', err.message);
+        error('Error', err instanceof Error ? err.message : 'Failed to save purchase.');
     }
   };
 

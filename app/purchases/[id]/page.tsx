@@ -6,13 +6,12 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft } from 'lucide-react';
 import {
   downloadInvoicePdf,
-  printInvoicePdf,
-  shareInvoicePdf,
+  downloadInvoicePng,
 } from '@/lib/invoice/actions/client';
-import { InvoiceDocument } from '@/components/invoice/InvoiceDocument';
+import { buildPurchaseInvoiceData } from '@/lib/invoice/builders';
+import { InvoiceReview, InvoiceReviewSkeleton } from '@/components/invoice/InvoiceReview';
 import { InvoiceSidebar } from '@/components/invoice/InvoiceSidebar';
 import { useToast } from '@/components/ui/Toast';
-import type { InvoiceData } from '@/lib/invoice/types';
 
 export default function PurchaseViewPage() {
   const router = useRouter();
@@ -23,8 +22,8 @@ export default function PurchaseViewPage() {
   const [items, setItems] = useState<any[]>([]);
   const [storeData, setStoreData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSendingWa, setIsSendingWa] = useState(false);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isPngLoading, setIsPngLoading] = useState(false);
 
   const loadPurchase = async () => {
     if (!id) return;
@@ -47,54 +46,28 @@ export default function PurchaseViewPage() {
 
   useEffect(() => { loadPurchase(); }, [id]);
 
-  // ── Invoice data builder ─────────────────────────────────────────────────
-
-  const getInvoiceData = (): InvoiceData => ({
-    type: 'purchase',
-    template: 'prestige',
-    store: storeData,
-    bill_number: purchase.bill_number,
-    date: purchase.date,
-    party: purchase.parties,
-    items: items.map((line: any) => {
-      const inv = line.inventory_items || {};
-      return { ...inv, qty: 1, rate: Number(inv.purchase_price) || 0, price: Number(inv.purchase_price) || 0, value: Number(inv.purchase_price) || 0 };
-    }),
-    subtotal: Number(purchase.total) || 0,
-    final_total: Number(purchase.total) || 0,
-    paid: Number(purchase.paid) || 0,
-    due: Number(purchase.due) || 0,
+  const getInvoiceData = () => buildPurchaseInvoiceData({
+    purchase, items, store: storeData, template: 'prestige',
   });
 
-  // ── PDF helpers ─────────────────────────────────────────────────────────
-
-  const handlePrint = async () => {
+  const handleDownloadPdf = async () => {
     if (!purchase) return;
-    try { await printInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Print Failed', e.message); }
-  };
-
-  const handleShare = async () => {
-    if (!purchase) return;
-    setIsSendingWa(true);
-    try { await shareInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Share Failed', e.message); }
-    finally { setIsSendingWa(false); }
-  };
-
-  const handleExport = async () => {
-    if (!purchase) return;
-    setIsPdfGenerating(true);
+    setIsPdfLoading(true);
     try { await downloadInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Export Failed', e.message); }
-    finally { setIsPdfGenerating(false); }
+    catch (e: any) { toastError('PDF Failed', e.message); }
+    finally { setIsPdfLoading(false); }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  const handleDownloadPng = async () => {
+    if (!purchase) return;
+    setIsPngLoading(true);
+    try { await downloadInvoicePng(getInvoiceData()); }
+    catch (e: any) { toastError('Image Failed', e.message); }
+    finally { setIsPngLoading(false); }
+  };
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 68px)' }}>
-      {/* ── Header strip ── */}
+    <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 68px)' }}>
       <div className="flex-none pb-3">
         <button
           onClick={() => router.push('/purchases')}
@@ -104,50 +77,21 @@ export default function PurchaseViewPage() {
         </button>
       </div>
 
-      {/* ── Split panel ── */}
-      <div className="flex gap-5 flex-1 min-h-0 overflow-hidden">
-        {/* Invoice document */}
+      <div className="flex gap-5 flex-1">
         <div className="flex-1 min-w-0">
-          {isLoading ? (
-            <InvoiceDocument type="purchase" billNumber="" date="" items={[]} subtotal={0} finalTotal={0} isLoading />
-          ) : purchase ? (
-            <InvoiceDocument
-              type="purchase"
-              billNumber={purchase.bill_number}
-              date={purchase.date}
-              status={purchase.status}
-              party={purchase.parties}
-              store={storeData}
-              items={items.map((line: any) => {
-                const inv = line.inventory_items || {};
-                const price = Number(inv.purchase_price) || 0;
-                const desc = [inv.brand, inv.model].filter(Boolean).join(' ') || 'Item';
-                const detail = [inv.imei, inv.ram_rom, inv.color].filter(Boolean).join(' · ') || undefined;
-                return { description: desc, detail, qty: 1, rate: price, amount: price };
-              })}
-              subtotal={Number(purchase.total) || 0}
-              finalTotal={Number(purchase.total) || 0}
-              paid={Number(purchase.paid) || 0}
-              due={Number(purchase.due) || 0}
-            />
-          ) : null}
+          {isLoading
+            ? <InvoiceReviewSkeleton />
+            : purchase && <InvoiceReview data={getInvoiceData()} status={purchase.status} />
+          }
         </div>
 
-        {/* Sidebar — independently scrollable */}
         {!isLoading && purchase && (
-          <div className="w-60 shrink-0 overflow-y-auto overflow-x-hidden">
+          <div className="w-56 shrink-0">
             <InvoiceSidebar
-              invoiceId={id}
-              type="purchase"
-              billNumber={purchase.bill_number}
-              date={purchase.date}
-              party={purchase.parties}
-              status={purchase.status || 'active'}
-              onPrint={handlePrint}
-              onShare={handleShare}
-              onExport={handleExport}
-              isSendingWa={isSendingWa}
-              isPdfGenerating={isPdfGenerating}
+              onDownloadPdf={handleDownloadPdf}
+              onDownloadPng={handleDownloadPng}
+              isPdfLoading={isPdfLoading}
+              isPngLoading={isPngLoading}
             />
           </div>
         )}

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +13,8 @@ import { Modal } from '@/components/ui/Modal';
 import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Plus, Trash2, ArrowLeft, Search, RefreshCw, Pencil } from 'lucide-react';
 import { useFormData, useInStockItems } from '@/hooks/use-form-data';
+import { createSale } from '@/features/sales/mutations';
+import { getDeliverySettings } from '@/lib/invoice/delivery';
 
 interface SelectedSaleItem {
   id: string;
@@ -214,195 +215,34 @@ export default function NewSalePage() {
 
     setIsSaving(true);
     try {
-      // 1. Verify all selected items are still in stock
-      const itemIds = selectedItems.map(i => i.id);
-      const { data: checkStock, error: chkErr } = await supabase
-        .from('inventory_items')
-        .select('id')
-        .in('id', itemIds)
-        .eq('status', 'in_stock');
-      
-      if (chkErr) throw chkErr;
-      if (checkStock.length !== selectedItems.length) {
-        error('Validation', 'One or more selected items are no longer available in stock.');
-        setIsSaving(false); return;
-      }
-
-      // 2. Verify Trade-in IMEIs are not globally in stock
-      const tiImeis = tradeIns.map(t => t.imei);
-      if (tiImeis.length > 0) {
-        const { data: tiDups } = await supabase
-          .from('inventory_items')
-          .select('imei')
-          .in('imei', tiImeis)
-          .eq('status', 'in_stock');
-        if (tiDups && tiDups.length > 0) {
-          error('Validation', `Trade-In IMEI ${tiDups[0].imei} already in stock in the system.`);
-          setIsSaving(false); return;
-        }
-      }
-
-      // 3. Counters
-      const { data: fyData, error: fyErr } = await supabase
-        .from('financial_years')
-        .select('sale_counter, purchase_counter, start_date, end_date')
-        .eq('id', selectedYear.id)
-        .single();
-      if (fyErr) throw fyErr;
-
-      const currentSaleCounter = fyData.sale_counter;
-      const currentPurchaseCounter = fyData.purchase_counter;
-      
-      const sYearStr = new Date(fyData.start_date).getFullYear();
-      const eYearStr = new Date(fyData.end_date).getFullYear().toString().slice(-2);
-      const saleBillNo = `SAL-${sYearStr}-${eYearStr}-${(currentSaleCounter + 1).toString().padStart(4, '0')}`;
-
-      // 4. Update Counters
-      await supabase.from('financial_years').update({
-        sale_counter: currentSaleCounter + 1,
-        purchase_counter: currentPurchaseCounter + tradeIns.length
-      }).eq('id', selectedYear.id);
-
-      // 5. Create Sale Record
-      const { data: saleData, error: saleErr } = await supabase.from('sales').insert({
-        bill_number: saleBillNo,
-        party_id: partyId,
-        total: subtotal,
+      const { saleId, billNumber } = await createSale({
+        partyId,
+        date,
+        selectedItems,
+        tradeIns,
         discount: Number(discount) || 0,
-        trade_in_credit: totalTradeInCredit,
-        final_total: finalTotal,
+        subtotal,
+        totalTradeInCredit,
+        finalTotal,
         paid: nPaid,
-        due: due,
-        bank_account_id: bankAccountId,
-        payment_mode_id: paymentModeId || null,
-        date: date,
-        financial_year_id: selectedYear.id,
-        status: 'active'
-      }).select('id').single();
-      if (saleErr) throw saleErr;
+        due,
+        bankAccountId,
+        paymentModeId,
+        financialYear: selectedYear,
+      });
 
-      // 6. Sale Items
-      const saleItemsInsert = selectedItems.map(item => ({
-        sale_id: saleData.id,
-        inventory_item_id: item.id,
-        sold_price: Number(item.sold_price)
-      }));
-      await supabase.from('sale_items').insert(saleItemsInsert);
-
-      // 7. Update Inventory to Sold
-      await supabase.from('inventory_items').update({ status: 'sold' }).in('id', itemIds);
-
-      // 8. Process Trade-Ins
-      for (let i = 0; i < tradeIns.length; i++) {
-        const ti = tradeIns[i];
-        
-        // Purchase
-        const pNum = currentPurchaseCounter + 1 + i;
-        const pBillNo = `PUR-TRD-${sYearStr}-${eYearStr}-${pNum.toString().padStart(4, '0')}`;
-        
-        const { data: purData, error: purErr } = await supabase.from('purchases').insert({
-          bill_number: pBillNo,
-          party_id: partyId, 
-          total: Number(ti.credit_value),
-          paid: Number(ti.credit_value), 
-          due: 0,
-          bank_account_id: bankAccountId || bankAccounts[0].id, 
-          date: date,
-          financial_year_id: selectedYear.id,
-          status: 'active'
-        }).select().single();
-        if (purErr) throw purErr;
-
-        // Inventory
-        const { data: invData, error: invErr } = await supabase.from('inventory_items').insert({
-          brand: ti.brand,
-          model: ti.model,
-          imei: ti.imei,
-          ram_rom: ti.ram_rom,
-          color: ti.color,
-          purchase_price: Number(ti.credit_value),
-          base_selling_price: Number(ti.credit_value), 
-          status: 'in_stock',
-          source: 'trade_in',
-          financial_year_id: selectedYear.id,
-          opening_entry_type: 'direct'
-        }).select().single();
-        if (invErr) throw invErr;
-
-        // Purchase Items
-        await supabase.from('purchase_items').insert({
-          purchase_id: purData.id,
-          inventory_item_id: invData.id
-        });
-
-        // Trade-ins Map
-        let documentUrl = null;
-        if (ti.file) {
-          try {
-            const ext = ti.file.name.split('.').pop();
-            const fileName = `trade_in_${Date.now()}.${ext}`;
-            const { data: uploadData } = await supabase.storage.from('documents').upload(`trade_ins/${fileName}`, ti.file);
-            if (uploadData) {
-              const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`trade_ins/${fileName}`);
-              documentUrl = urlData.publicUrl;
-            }
-          } catch (e) {
-            console.warn("Storage error", e);
-          }
-        }
-
-        await supabase.from('trade_ins').insert({
-          sale_id: saleData.id,
-          brand: ti.brand,
-          model: ti.model,
-          imei: ti.imei,
-          ram_rom: ti.ram_rom,
-          color: ti.color,
-          credit_value: Number(ti.credit_value),
-          mrp: Number(ti.mrp) || null,
-          document_url: documentUrl,
-          new_inventory_item_id: invData.id
-        });
-      }
-
-      // 9. Account Transaction (Sale Payment)
-      if (nPaid > 0) {
-        await supabase.from('account_transactions').insert({
-          bank_account_id: bankAccountId,
-          payment_mode_id: paymentModeId || null,
-          type: 'credit',
-          amount: nPaid,
-          date: date,
-          reference_type: 'sale',
-          reference_id: saleData.id,
-          financial_year_id: selectedYear.id
-        });
-
-        // Also create payments_in record for payment history
-        const { error: piErr } = await supabase
-          .from('payments_in')
-          .insert({
-            sale_id: saleData.id,
-            party_id: partyId,
-            amount: nPaid,
-            bank_account_id: bankAccountId,
-            payment_mode_id: paymentModeId || null,
-            date: date,
-            financial_year_id: selectedYear.id
-          });
-        if (piErr) throw piErr;
-      }
-
-      success('Success', `Sale ${saleBillNo} recorded!`);
+      success('Success', `Sale ${billNumber} recorded!`);
+      if (getDeliverySettings().sale.autoSend) sessionStorage.setItem('fusion-one.whatsapp-auto-send', `sale:${billNumber}`);
 
       const pDataStr = sessionStorage.getItem('convert_proforma');
       if (pDataStr) {
         try {
           const parsed = JSON.parse(pDataStr);
           if (parsed.proforma_id) {
+            const { supabase } = await import('@/lib/supabase');
             await supabase.from('proforma_invoices').update({ status: 'converted' }).eq('id', parsed.proforma_id);
           }
-        } catch(e) {}
+        } catch(e) { /* ignore */ }
         sessionStorage.removeItem('convert_proforma');
       }
 
@@ -417,11 +257,11 @@ export default function NewSalePage() {
         queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
       ]);
 
-      router.push(`/sales/${saleData.id}`);
+      router.push(`/sales/${saleId}`);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSaving(false);
-      error('Error', err.message || 'Failed to save sale.');
+      error('Error', err instanceof Error ? err.message : 'Failed to save sale.');
     }
   };
 

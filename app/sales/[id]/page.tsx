@@ -5,20 +5,18 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import {
-  ArrowLeft, Pencil, Ban, Trash2, AlertTriangle,
-  X, CheckCircle2,
+  ArrowLeft, Pencil, Ban, Trash2, AlertTriangle, X, CheckCircle2,
 } from 'lucide-react';
 import {
   downloadInvoicePdf,
-  printInvoicePdf,
-  shareInvoicePdf,
+  downloadInvoicePng,
 } from '@/lib/invoice/actions/client';
-import { InvoiceDocument } from '@/components/invoice/InvoiceDocument';
+import { buildSaleInvoiceData } from '@/lib/invoice/builders';
+import { InvoiceReview, InvoiceReviewSkeleton } from '@/components/invoice/InvoiceReview';
 import { InvoiceSidebar, SidebarButton } from '@/components/invoice/InvoiceSidebar';
 import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
-import type { InvoiceData } from '@/lib/invoice/types';
 import { useStoreTemplates } from '@/hooks/useStoreTemplates';
 
 export default function SaleViewPage() {
@@ -32,11 +30,12 @@ export default function SaleViewPage() {
   const [sale, setSale] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [tradeIns, setTradeIns] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSendingWa, setIsSendingWa] = useState(false);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-  const [canDelete, setCanDelete] = useState(false);
   const [storeData, setStoreData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [canDelete, setCanDelete] = useState(false);
+
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isPngLoading, setIsPngLoading] = useState(false);
 
   // Dialogs
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -69,8 +68,8 @@ export default function SaleViewPage() {
       setItems(siData || []);
       setTradeIns(tiData || []);
       setStoreData(storeResult.data || null);
-      const allTradeInsInStock = (tiData || []).every((ti: any) => ti.inventory_items?.status === 'in_stock');
-      setCanDelete(Number(sData?.paid) === 0 && allTradeInsInStock);
+      const allInStock = (tiData || []).every((ti: any) => ti.inventory_items?.status === 'in_stock');
+      setCanDelete(Number(sData?.paid) === 0 && allInStock);
     } catch (e) {
       console.error(e);
     } finally {
@@ -80,52 +79,27 @@ export default function SaleViewPage() {
 
   useEffect(() => { loadSale(); }, [id]);
 
-  // ── Invoice data builder ────────────────────────────────────────────────
+  const getInvoiceData = () => buildSaleInvoiceData({
+    sale, items, tradeIns, store: storeData, template: templates.sale,
+  });
 
-  const getInvoiceData = (): InvoiceData => {
-    const additionalDiscount = Number(sale.discount) || 0;
-    const mappedItems = items.map(line => {
-      const basePrice = Number(line.inventory_items?.base_selling_price) || Number(line.sold_price) || 0;
-      const soldPrice = Number(line.sold_price) || 0;
-      const itemDiscount = Math.max(0, basePrice - soldPrice);
-      return { ...line.inventory_items, qty: 1, rate: basePrice, price: basePrice, discount: itemDiscount, value: soldPrice };
-    });
-    const itemDiscountTotal = mappedItems.reduce((s, i) => s + (i.discount || 0), 0);
-    const subtotal = mappedItems.reduce((s, i) => s + (i.rate || 0), 0);
-    return {
-      type: 'sale', template: templates.sale, store: storeData,
-      bill_number: sale.bill_number, date: sale.date, party: sale.parties,
-      items: mappedItems, subtotal, item_discount: itemDiscountTotal,
-      additional_discount: additionalDiscount, discount: itemDiscountTotal + additionalDiscount,
-      trade_in_credit: Number(sale.trade_in_credit),
-      final_total: Number(sale.final_total),
-      paid: Number(sale.paid), due: Number(sale.due), trade_ins: tradeIns,
-    };
-  };
-
-  const handlePrint = async () => {
+  const handleDownloadPdf = async () => {
     if (!sale) return;
-    try { await printInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Print Failed', e.message); }
-  };
-
-  const handleShare = async () => {
-    if (!sale) return;
-    setIsSendingWa(true);
-    try { await shareInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Share Failed', e.message); }
-    finally { setIsSendingWa(false); }
-  };
-
-  const handleExport = async () => {
-    if (!sale) return;
-    setIsPdfGenerating(true);
+    setIsPdfLoading(true);
     try { await downloadInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Export Failed', e.message); }
-    finally { setIsPdfGenerating(false); }
+    catch (e: any) { toastError('PDF Failed', e.message); }
+    finally { setIsPdfLoading(false); }
   };
 
-  // ── Cancel ──────────────────────────────────────────────────────────────
+  const handleDownloadPng = async () => {
+    if (!sale) return;
+    setIsPngLoading(true);
+    try { await downloadInvoicePng(getInvoiceData()); }
+    catch (e: any) { toastError('Image Failed', e.message); }
+    finally { setIsPngLoading(false); }
+  };
+
+  // ── Cancel ────────────────────────────────────────────────────────────────
 
   const handleCancel = async () => {
     if (!sale || !selectedYear) return;
@@ -180,7 +154,7 @@ export default function SaleViewPage() {
     }
   };
 
-  // ── Delete ──────────────────────────────────────────────────────────────
+  // ── Delete ────────────────────────────────────────────────────────────────
 
   const handleDelete = async () => {
     if (!sale || !selectedYear) return;
@@ -188,7 +162,7 @@ export default function SaleViewPage() {
     try {
       if (Number(sale.paid) > 0) throw new Error('Cannot delete: payment has already been received.');
       for (const ti of tradeIns) {
-        if (ti.inventory_items?.status !== 'in_stock') throw new Error(`Cannot delete: trade-in device has already been resold.`);
+        if (ti.inventory_items?.status !== 'in_stock') throw new Error('Cannot delete: trade-in device has already been resold.');
       }
       for (const ti of tradeIns) {
         const { data: piRows } = await supabase.from('purchase_items').select('purchase_id').eq('inventory_item_id', ti.new_inventory_item_id).limit(1);
@@ -221,7 +195,7 @@ export default function SaleViewPage() {
     }
   };
 
-  // ── Create replacement purchase for resold trade-in ──────────────────
+  // ── Create replacement purchase for resold trade-in ───────────────────────
 
   const handleCreatePurchaseBill = async (ti: any) => {
     if (!selectedYear || !sale) return;
@@ -251,149 +225,97 @@ export default function SaleViewPage() {
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────
-
   const isCancelled = sale?.status === 'cancelled';
   const f = (n: number) => `${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 })} Rs.`;
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 68px)' }}>
-      {/* ── Header strip ── */}
-      <div className="flex-none flex flex-col gap-3 pb-3">
+    <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 68px)' }}>
+      {/* ── Back button ── */}
+      <div className="flex-none pb-3">
         <button
           onClick={() => router.push('/sales')}
           className="h-8 w-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-sm transition-all"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-
-        {/* Cancellation banner */}
-        {!isLoading && isCancelled && (
-          <div className="flex items-center gap-3 bg-rose-50 border border-rose-200 rounded-xl px-5 py-3.5">
-            <Ban className="h-5 w-5 text-rose-600 shrink-0" />
-            <div>
-              <p className="text-sm font-bold text-rose-800">This invoice has been cancelled</p>
-              <p className="text-xs text-rose-600 mt-0.5">All sold items have been returned to stock. Cash payments have been reversed in the ledger.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Post-cancel resold trade-in warning */}
-        {showResoldWarning && resoldTradeIns.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-bold text-amber-800">Action Required — Trade-In Device Already Sold</p>
-                <p className="text-[11px] text-amber-700 mt-0.5">The following trade-in device(s) were already resold. Their auto-purchase bills have been cancelled. Create proper purchase records for them.</p>
-              </div>
-              <button onClick={() => setShowResoldWarning(false)} className="ml-auto text-amber-500 hover:text-amber-700">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {resoldTradeIns.map(ti => (
-                <div key={ti.id} className="flex items-center justify-between bg-white border border-amber-200 rounded-lg px-3 py-2.5 text-xs">
-                  <div>
-                    <p className="font-semibold text-slate-800">{ti.brand} {ti.model}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">{ti.imei} · Credit: {f(ti.credit_value)}</p>
-                  </div>
-                  <Button size="sm" onClick={() => handleCreatePurchaseBill(ti)} isLoading={isCreatingPurchase === ti.id} className="text-xs h-7 ml-4 shrink-0">
-                    Create Purchase Bill
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* ── Split panel: Invoice document + Sidebar ── */}
-      <div className="flex gap-5 flex-1 min-h-0 overflow-hidden">
-        {/* Invoice document — fills height, scrolls internally */}
+      {/* ── Cancellation banner ── */}
+      {!isLoading && isCancelled && (
+        <div className="flex-none flex items-center gap-3 bg-rose-50 border border-rose-200 rounded-xl px-5 py-3.5 mb-3">
+          <Ban className="h-5 w-5 text-rose-600 shrink-0" />
+          <div>
+            <p className="text-sm font-bold text-rose-800">This invoice has been cancelled</p>
+            <p className="text-xs text-rose-600 mt-0.5">All sold items returned to stock. Cash payments reversed in ledger.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Resold trade-in warning ── */}
+      {showResoldWarning && resoldTradeIns.length > 0 && (
+        <div className="flex-none bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3 mb-3">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs font-bold text-amber-800">Action Required — Trade-In Device Already Sold</p>
+              <p className="text-[11px] text-amber-700 mt-0.5">These trade-in devices were already resold. Their auto-purchase bills have been cancelled. Create proper purchase records.</p>
+            </div>
+            <button onClick={() => setShowResoldWarning(false)} className="ml-auto text-amber-500 hover:text-amber-700">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {resoldTradeIns.map(ti => (
+              <div key={ti.id} className="flex items-center justify-between bg-white border border-amber-200 rounded-lg px-3 py-2.5 text-xs">
+                <div>
+                  <p className="font-semibold text-slate-800">{ti.brand} {ti.model}</p>
+                  <p className="text-[10px] text-slate-400 font-mono">{ti.imei} · Credit: {f(ti.credit_value)}</p>
+                </div>
+                <Button size="sm" onClick={() => handleCreatePurchaseBill(ti)} isLoading={isCreatingPurchase === ti.id} className="text-xs h-7 ml-4 shrink-0">
+                  Create Purchase Bill
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Content: Review + Sidebar ── */}
+      <div className="flex gap-5 flex-1">
+        {/* Invoice review */}
         <div className="flex-1 min-w-0">
-          {isLoading ? (
-            <InvoiceDocument type="sale" billNumber="" date="" items={[]} subtotal={0} finalTotal={0} isLoading />
-          ) : sale ? (
-            <InvoiceDocument
-              type="sale"
-              billNumber={sale.bill_number}
-              date={sale.date}
-              status={sale.status}
-              party={sale.parties}
-              store={storeData}
-              items={items.map((line: any) => {
-                const base = Number(line.inventory_items?.base_selling_price) || Number(line.sold_price) || 0;
-                const sold = Number(line.sold_price) || 0;
-                const inv = line.inventory_items || {};
-                const desc = [inv.brand, inv.model].filter(Boolean).join(' ') || 'Item';
-                const detail = [inv.imei, inv.ram_rom, inv.color].filter(Boolean).join(' · ') || undefined;
-                return { description: desc, detail, qty: 1, rate: base, discount: Math.max(0, base - sold), amount: sold };
-              })}
-              subtotal={items.reduce((s: number, l: any) => s + (Number(l.inventory_items?.base_selling_price) || Number(l.sold_price) || 0), 0)}
-              itemDiscount={items.reduce((s: number, l: any) => {
-                const base = Number(l.inventory_items?.base_selling_price) || Number(l.sold_price) || 0;
-                return s + Math.max(0, base - (Number(l.sold_price) || 0));
-              }, 0)}
-              additionalDiscount={Number(sale.discount) || 0}
-              tradeInCredit={Number(sale.trade_in_credit) || 0}
-              finalTotal={Number(sale.final_total)}
-              paid={Number(sale.paid)}
-              due={Number(sale.due)}
-              tradeIns={tradeIns.map((ti: any) => ({
-                description: [ti.brand, ti.model].filter(Boolean).join(' ') || 'Trade-In',
-                detail: ti.imei || undefined,
-                value: Number(ti.credit_value) || 0,
-              }))}
-            />
-          ) : null}
+          {isLoading
+            ? <InvoiceReviewSkeleton />
+            : sale && <InvoiceReview data={getInvoiceData()} status={sale.status} />
+          }
         </div>
 
-        {/* Sidebar — independently scrollable */}
+        {/* Sidebar */}
         {!isLoading && sale && (
-          <div className="w-60 shrink-0 overflow-y-auto overflow-x-hidden">
-          <InvoiceSidebar
-            invoiceId={id}
-            type="sale"
-            billNumber={sale.bill_number}
-            date={sale.date}
-            party={sale.parties}
-            status={sale.status || 'active'}
-            onPrint={handlePrint}
-            onShare={handleShare}
-            onExport={handleExport}
-            isSendingWa={isSendingWa}
-            isPdfGenerating={isPdfGenerating}
-          >
-            {/* Sale-specific: Edit, Cancel, Delete */}
-            {!isReadOnly && !isCancelled && (
-              <>
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 px-0.5 mb-1">Invoice</p>
-                <SidebarButton
-                  icon={Pencil}
-                  label="Edit Invoice"
-                  onClick={() => router.push(`/sales/${id}/edit`)}
-                />
-                <SidebarButton
-                  icon={Ban}
-                  label="Cancel Invoice"
-                  onClick={() => setShowCancelDialog(true)}
-                />
-                {canDelete && (
-                  <SidebarButton
-                    icon={Trash2}
-                    label="Delete Permanently"
-                    onClick={() => setShowDeleteDialog(true)}
-                  />
-                )}
-              </>
-            )}
-          </InvoiceSidebar>
+          <div className="w-56 shrink-0">
+            <InvoiceSidebar
+              onDownloadPdf={handleDownloadPdf}
+              onDownloadPng={handleDownloadPng}
+              isPdfLoading={isPdfLoading}
+              isPngLoading={isPngLoading}
+              invoiceData={getInvoiceData()}
+            >
+              {!isReadOnly && !isCancelled && (
+                <>
+                  <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 px-0.5 mb-1">Invoice</p>
+                  <SidebarButton icon={Pencil} label="Edit Invoice" onClick={() => router.push(`/sales/${id}/edit`)} />
+                  <SidebarButton icon={Ban} label="Cancel Invoice" onClick={() => setShowCancelDialog(true)} />
+                  {canDelete && (
+                    <SidebarButton icon={Trash2} label="Delete Permanently" onClick={() => setShowDeleteDialog(true)} />
+                  )}
+                </>
+              )}
+            </InvoiceSidebar>
           </div>
         )}
       </div>
 
-      {/* ── Cancel Confirmation Dialog ── */}
+      {/* ── Cancel Dialog ── */}
       {showCancelDialog && sale && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -427,7 +349,7 @@ export default function SaleViewPage() {
               )}
               <li className="text-xs text-slate-600 flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                Bill number {sale.bill_number} preserved as a cancellation record
+                Bill number {sale.bill_number} preserved as cancellation record
               </li>
             </ul>
             <div className="flex gap-3 justify-end">
@@ -442,7 +364,7 @@ export default function SaleViewPage() {
         </div>
       )}
 
-      {/* ── Delete Confirmation Dialog ── */}
+      {/* ── Delete Dialog ── */}
       {showDeleteDialog && sale && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
@@ -16,56 +16,17 @@ import {
   ArrowUpRight, ArrowDownLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAccountsPageData, useAccountsInvalidation, computeBalances } from '@/features/accounts';
-
-// ─── Types ──────────────────────────────────────────────────────────────────
-interface BankAccount { id: string; name: string; is_cash: boolean; }
-interface PaymentMode { id: string; bank_account_id: string; name: string; }
-interface AccountTransaction { bank_account_id: string; type: 'credit' | 'debit'; amount: number; }
-interface TransactionRow {
-  id: string;
-  bank_account_id: string;
-  type: 'credit' | 'debit';
-  amount: number;
-  date: string;
-  reference_type: string;
-  reference_id: string;
-  notes: string | null;
-  transfer_group_id: string | null;
-  created_at: string;
-}
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function getTransactionLabel(refType: string, txType: 'credit' | 'debit'): string {
-  switch (refType) {
-    case 'sale': return 'Sale Receipt';
-    case 'purchase': return 'Purchase Payment';
-    case 'payment_in': return 'Payment Received';
-    case 'payment_out': return 'Payment Paid';
-    case 'add_funds': return 'Funds Added';
-    case 'transfer': return txType === 'debit' ? 'Transfer Out' : 'Transfer In';
-    case 'opening_balance': return 'Opening Balance';
-    default: return refType;
-  }
-}
-
-function getTransactionColor(refType: string, txType: 'credit' | 'debit') {
-  if (txType === 'credit') {
-    return { bg: 'bg-emerald-50', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700' };
-  }
-  return { bg: 'bg-rose-50', text: 'text-rose-700', badge: 'bg-rose-100 text-rose-700' };
-}
-
-function formatINR(val: number) {
-  return Math.abs(val).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-}
-
-function clampDate(fy: { start_date: string; end_date: string }) {
-  const today = new Date().toISOString().split('T')[0];
-  if (today < fy.start_date) return fy.start_date;
-  if (today > fy.end_date) return fy.end_date;
-  return today;
-}
+import {
+  useAccountsPageData,
+  useAccountsInvalidation,
+  computeBalances,
+  getTransactionLabel,
+  getTransactionColor,
+  type AccountBankAccount,
+  type AccountPaymentMode,
+  type TransactionRow,
+} from '@/features/accounts';
+import { formatINR, clampToFinancialYear } from '@/features/accounts/mutations';
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function AccountsPage() {
@@ -76,7 +37,7 @@ export default function AccountsPage() {
 
   // ── Account modal state ─────────────────────────────────────────────────
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
+  const [editingAccount, setEditingAccount] = useState<AccountBankAccount | null>(null);
   const [accountNameInput, setAccountNameInput] = useState('');
 
   // ── Payment mode state ──────────────────────────────────────────────────
@@ -84,7 +45,7 @@ export default function AccountsPage() {
   const [activeBankId, setActiveBankId] = useState<string | null>(null);
   const [modeNameInput, setModeNameInput] = useState('');
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [modeToDelete, setModeToDelete] = useState<PaymentMode | null>(null);
+  const [modeToDelete, setModeToDelete] = useState<AccountPaymentMode | null>(null);
 
   // ── Add Funds modal state ───────────────────────────────────────────────
   const [isAddFundsOpen, setIsAddFundsOpen] = useState(false);
@@ -172,7 +133,7 @@ export default function AccountsPage() {
     if (!selectedYear) return;
     setAddFundsAccountId(preselectedAccountId || '');
     setAddFundsAmount('');
-    setAddFundsDate(clampDate(selectedYear));
+    setAddFundsDate(clampToFinancialYear(selectedYear));
     setAddFundsNotes('');
     setIsAddFundsOpen(true);
   };
@@ -211,7 +172,7 @@ export default function AccountsPage() {
     setTransferFromId(preselectedFromId || '');
     setTransferToId('');
     setTransferAmount('');
-    setTransferDate(clampDate(selectedYear));
+    setTransferDate(clampToFinancialYear(selectedYear));
     setTransferNotes('');
     setIsTransferOpen(true);
   };

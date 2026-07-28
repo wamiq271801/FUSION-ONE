@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
 import { useDashboardData } from '@/features/dashboard';
 import Link from 'next/link';

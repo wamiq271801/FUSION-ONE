@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { useStoreTemplates } from '@/hooks/useStoreTemplates';
-import { downloadInvoicePdf, printInvoicePdf, shareInvoicePdf } from '@/lib/invoice/actions/client';
+import { downloadInvoicePdf } from '@/lib/invoice/actions/client';
 import type { InvoiceData } from '@/lib/invoice/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -103,13 +103,15 @@ export default function SalesPage() {
     await downloadInvoicePdf(buildInvoiceData(sale, d));
   });
 
-  const handleShare = (sale: any) => withDetail(sale.id, async (d) => {
-    await shareInvoicePdf(buildInvoiceData(sale, d));
-  });
+  const handleShare = (sale: any) => {
+    setOpenMenuId(null);
+    router.push(`/sales/${sale.id}`);
+  };
 
-  const handlePrint = (sale: any) => withDetail(sale.id, async (d) => {
-    await printInvoicePdf(buildInvoiceData(sale, d));
-  });
+  const handlePrint = (sale: any) => {
+    setOpenMenuId(null);
+    router.push(`/sales/${sale.id}`);
+  };
 
   const openCancelDialog = async (sale: any) => {
     setOpenMenuId(null);

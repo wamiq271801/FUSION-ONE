@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { useToast } from '@/components/ui/Toast';
 import { Mail, Lock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,7 +14,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const { error, success } = useToast();
-  const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -6,13 +6,12 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, ShoppingCart } from 'lucide-react';
 import {
   downloadInvoicePdf,
-  printInvoicePdf,
-  shareInvoicePdf,
+  downloadInvoicePng,
 } from '@/lib/invoice/actions/client';
-import { InvoiceDocument } from '@/components/invoice/InvoiceDocument';
+import { buildProformaInvoiceData } from '@/lib/invoice/builders';
+import { InvoiceReview, InvoiceReviewSkeleton } from '@/components/invoice/InvoiceReview';
 import { InvoiceSidebar, SidebarButton } from '@/components/invoice/InvoiceSidebar';
 import { useToast } from '@/components/ui/Toast';
-import type { InvoiceData } from '@/lib/invoice/types';
 
 export default function ProformaViewPage() {
   const router = useRouter();
@@ -24,8 +23,8 @@ export default function ProformaViewPage() {
   const [tradeIns, setTradeIns] = useState<any[]>([]);
   const [storeData, setStoreData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSendingWa, setIsSendingWa] = useState(false);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isPngLoading, setIsPngLoading] = useState(false);
 
   const loadProforma = async () => {
     if (!id) return;
@@ -38,13 +37,11 @@ export default function ProformaViewPage() {
       if (pfErr) throw pfErr;
       if (pfIErr) throw pfIErr;
 
-      let pfTradeIns: any[] = [];
       const { data: tData } = await supabase.from('proforma_trade_ins').select('*').eq('proforma_invoice_id', id);
-      if (tData) pfTradeIns = tData;
 
       setPData(pfData);
       setItems(pfItems || []);
-      setTradeIns(pfTradeIns);
+      setTradeIns(tData || []);
       setStoreData(storeResult.data || null);
     } catch (e) {
       console.error(e);
@@ -55,50 +52,24 @@ export default function ProformaViewPage() {
 
   useEffect(() => { loadProforma(); }, [id]);
 
-  // ── Invoice data builder ─────────────────────────────────────────────────
-
-  const getInvoiceData = (): InvoiceData => ({
-    type: 'proforma',
-    template: 'prestige',
-    store: storeData,
-    bill_number: pData.bill_number,
-    date: pData.date,
-    party: pData.parties,
-    items: items.map((line: any) => ({
-      description: line.description, qty: Number(line.qty),
-      rate: Number(line.rate), discount: Number(line.discount || 0), value: Number(line.value),
-    })) as any,
-    subtotal: Number(pData.total),
-    additional_discount: Number(pData.discount),
-    discount: Number(pData.discount),
-    trade_in_credit: Number(pData.trade_in_credit || 0),
-    final_total: Number(pData.final_total),
-    paid: 0, due: Number(pData.final_total),
-    trade_ins: tradeIns.map((ti: any) => ({ description: ti.description, qty: Number(ti.qty), rate: Number(ti.rate), value: Number(ti.value) })),
+  const getInvoiceData = () => buildProformaInvoiceData({
+    proforma: pData, items, tradeIns, store: storeData, template: 'prestige',
   });
 
-  // ── PDF helpers ─────────────────────────────────────────────────────────
-
-  const handlePrint = async () => {
+  const handleDownloadPdf = async () => {
     if (!pData) return;
-    try { await printInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Print Failed', e.message); }
-  };
-
-  const handleShare = async () => {
-    if (!pData) return;
-    setIsSendingWa(true);
-    try { await shareInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Share Failed', e.message); }
-    finally { setIsSendingWa(false); }
-  };
-
-  const handleExport = async () => {
-    if (!pData) return;
-    setIsPdfGenerating(true);
+    setIsPdfLoading(true);
     try { await downloadInvoicePdf(getInvoiceData()); }
-    catch (e: any) { toastError('Export Failed', e.message); }
-    finally { setIsPdfGenerating(false); }
+    catch (e: any) { toastError('PDF Failed', e.message); }
+    finally { setIsPdfLoading(false); }
+  };
+
+  const handleDownloadPng = async () => {
+    if (!pData) return;
+    setIsPngLoading(true);
+    try { await downloadInvoicePng(getInvoiceData()); }
+    catch (e: any) { toastError('Image Failed', e.message); }
+    finally { setIsPngLoading(false); }
   };
 
   const handleConvert = () => {
@@ -106,7 +77,10 @@ export default function ProformaViewPage() {
     tradeIns.forEach(ti => {
       const qty = Math.max(1, Math.round(Number(ti.qty) || 1));
       for (let i = 0; i < qty; i++) {
-        prefilledTradeIns.push({ id: Math.random().toString(), brand: 'Exchange', model: ti.description, imei: '', ram_rom: '', color: '', credit_value: Number(ti.rate).toString(), mrp: '' });
+        prefilledTradeIns.push({
+          id: Math.random().toString(), brand: 'Exchange', model: ti.description,
+          imei: '', ram_rom: '', color: '', credit_value: Number(ti.rate).toString(), mrp: '',
+        });
       }
     });
     sessionStorage.setItem('convert_proforma', JSON.stringify({
@@ -116,11 +90,8 @@ export default function ProformaViewPage() {
     router.push('/sales/new');
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────
-
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 68px)' }}>
-      {/* ── Header strip ── */}
+    <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 68px)' }}>
       <div className="flex-none pb-3">
         <button
           onClick={() => router.push('/proformas')}
@@ -130,57 +101,24 @@ export default function ProformaViewPage() {
         </button>
       </div>
 
-      {/* ── Split panel ── */}
-      <div className="flex gap-5 flex-1 min-h-0 overflow-hidden">
-        {/* Invoice document */}
+      <div className="flex gap-5 flex-1">
         <div className="flex-1 min-w-0">
-          {isLoading ? (
-            <InvoiceDocument type="proforma" billNumber="" date="" items={[]} subtotal={0} finalTotal={0} isLoading />
-          ) : pData ? (
-            <InvoiceDocument
-              type="proforma"
-              billNumber={pData.bill_number}
-              date={pData.date}
-              status={pData.status}
-              party={pData.parties}
-              store={storeData}
-              items={items.map((line: any) => ({
-                description: line.description || 'Item',
-                qty: Number(line.qty) || 1,
-                rate: Number(line.rate) || 0,
-                discount: Number(line.discount) || 0,
-                amount: Number(line.value) || 0,
-              }))}
-              subtotal={Number(pData.total) || 0}
-              additionalDiscount={Number(pData.discount) || 0}
-              tradeInCredit={Number(pData.trade_in_credit) || 0}
-              finalTotal={Number(pData.final_total) || 0}
-              tradeIns={tradeIns.map((ti: any) => ({
-                description: ti.description || 'Trade-In',
-                value: Number(ti.value) || 0,
-              }))}
-            />
-          ) : null}
+          {isLoading
+            ? <InvoiceReviewSkeleton />
+            : pData && <InvoiceReview data={getInvoiceData()} status={pData.status} />
+          }
         </div>
 
-        {/* Sidebar — independently scrollable */}
         {!isLoading && pData && (
-          <div className="w-60 shrink-0 overflow-y-auto overflow-x-hidden">
+          <div className="w-56 shrink-0">
             <InvoiceSidebar
-              invoiceId={id}
-              type="proforma"
-              billNumber={pData.bill_number}
-              date={pData.date}
-              party={pData.parties}
-              status={pData.status || 'active'}
-              onPrint={handlePrint}
-              onShare={handleShare}
-              onExport={handleExport}
-              isSendingWa={isSendingWa}
-              isPdfGenerating={isPdfGenerating}
+              onDownloadPdf={handleDownloadPdf}
+              onDownloadPng={handleDownloadPng}
+              isPdfLoading={isPdfLoading}
+              isPngLoading={isPngLoading}
+              invoiceData={getInvoiceData()}
             >
-              {/* Proforma-specific: Convert to Sale */}
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 px-0.5 mb-1">Quotation</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 px-0.5 mb-1">Quotation</p>
               {pData.status === 'active' ? (
                 <SidebarButton
                   icon={ShoppingCart}
@@ -189,7 +127,7 @@ export default function ProformaViewPage() {
                   variant="primary"
                 />
               ) : (
-                <div className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
+                <div className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
                   <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
                   Converted to Sale
                 </div>

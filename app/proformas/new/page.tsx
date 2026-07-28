@@ -14,6 +14,7 @@ import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Modal } from '@/components/ui/Modal';
 import { Plus, Trash2, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useFormData } from '@/hooks/use-form-data';
+import { getDeliverySettings } from '@/lib/invoice/delivery';
 
 
 interface ProformaItem {
@@ -204,6 +205,7 @@ export default function NewProformaPage() {
       }
 
       success('Success', `Quotation ${pBillNo} created!`);
+      if (getDeliverySettings().proforma.autoSend) sessionStorage.setItem('fusion-one.whatsapp-auto-send', `proforma:${pBillNo}`);
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['proformas-page', selectedYear.id] })

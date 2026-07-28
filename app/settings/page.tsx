@@ -12,10 +12,12 @@ import type { TemplateVariant } from '@/lib/invoice/types';
 import type { InvoiceType } from '@/hooks/useStoreTemplates';
 import {
   Store, LogOut, Upload, Save, User, FileText, Check,
-  ChevronRight, Layers,
+  ChevronRight, Layers, MessageCircle,
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { DELIVERY_SETTINGS_KEY, defaultDeliverySettings, type DeliverySettings } from '@/lib/invoice/delivery';
+import { WhatsAppPlatformPanel } from '@/components/settings/WhatsAppPlatformPanel';
 
 // ─── Template Catalogue ─────────────────────────────────────────────────────
 
@@ -105,6 +107,15 @@ function InvoiceTemplatesPanel() {
 }
 
 // ─── Profile Panel ─────────────────────────────────────────────────────────
+
+function WhatsAppDeliveryPanel() {
+  const { success } = useToast();
+  const [settings, setSettings] = useState<DeliverySettings>(defaultDeliverySettings);
+  useEffect(() => { try { const saved = JSON.parse(localStorage.getItem(DELIVERY_SETTINGS_KEY) || '{}'); setSettings({ sale: { ...defaultDeliverySettings.sale, ...saved.sale }, proforma: { ...defaultDeliverySettings.proforma, ...saved.proforma } }); } catch { setSettings(defaultDeliverySettings); } }, []);
+  const save = () => { localStorage.setItem(DELIVERY_SETTINGS_KEY, JSON.stringify(settings)); success('Saved', 'WhatsApp delivery preferences updated'); };
+  const fields = [{ type: 'sale' as const, label: 'Sales Invoice' }, { type: 'proforma' as const, label: 'Quotation / Proforma' }];
+  return <div className="space-y-5"><WhatsAppPlatformPanel /><div><h2 className="text-sm font-semibold text-slate-900">WhatsApp Delivery</h2><p className="text-[11px] text-slate-400 mt-0.5">Configure customer invoice messages and automatic delivery.</p></div>{fields.map(({ type, label }) => <div key={type} className="rounded-xl border border-slate-200 bg-white overflow-hidden"><div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5"><div><p className="text-xs font-semibold text-slate-900">{label}</p><p className="text-[11px] text-slate-400">Sent only to the customer number for this document.</p></div><label className="flex items-center gap-2 text-xs font-medium text-slate-700"><input type="checkbox" checked={settings[type].autoSend} onChange={event => setSettings(current => ({ ...current, [type]: { ...current[type], autoSend: event.target.checked } }))} className="h-4 w-4 accent-indigo-600" />Auto Send</label></div><div className="p-5 space-y-2"><label className="text-xs font-medium text-slate-700">Message template</label><textarea value={settings[type].template} onChange={event => setSettings(current => ({ ...current, [type]: { ...current[type], template: event.target.value } }))} rows={6} className="w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed outline-none focus:border-indigo-500" /><div className="rounded-lg bg-slate-50 p-3 text-xs whitespace-pre-wrap text-slate-600">{settings[type].template.replace(/{{\s*customer_name\s*}}/g, 'Alex').replace(/{{\s*invoice_number\s*}}/g, 'INV-2026-0001').replace(/{{\s*invoice_date\s*}}/g, '28 Jul 2026').replace(/{{\s*company_name\s*}}/g, 'Fusion Gadgets').replace(/{{\s*grand_total\s*}}/g, '25,000.00 Rs.').replace(/{{\s*payment_status\s*}}/g, 'Paid').replace(/{{\s*(due_date|company_phone|company_address)\s*}}/g, '')}</div><p className="text-[10px] text-slate-400">Variables: {'{{customer_name}}'}, {'{{invoice_number}}'}, {'{{invoice_date}}'}, {'{{company_name}}'}, {'{{grand_total}}'}, {'{{due_date}}'}, {'{{payment_status}}'}, {'{{company_phone}}'}, {'{{company_address}}'}</p></div></div>)}<div className="flex justify-end"><Button size="sm" onClick={save} className="gap-1.5 text-xs h-8 bg-indigo-600 hover:bg-indigo-700"><Save className="h-3.5 w-3.5" />Save Delivery Settings</Button></div></div>;
+}
 
 function ProfilePanel() {
   const { signOut, user } = useAuth();
@@ -301,11 +312,12 @@ function ProfilePanel() {
 
 // ─── Sidebar nav items ────────────────────────────────────────────────────────
 
-type ActiveTab = 'profile' | 'templates';
+type ActiveTab = 'profile' | 'templates' | 'whatsapp';
 
 const SIDEBAR_ITEMS: { id: ActiveTab; label: string; icon: any }[] = [
   { id: 'profile',   label: 'Profile',           icon: User   },
   { id: 'templates', label: 'Invoice Templates', icon: Layers },
+  { id: 'whatsapp', label: 'WhatsApp Delivery', icon: MessageCircle },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -314,7 +326,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.slice(1);
-      if (hash === 'profile' || hash === 'templates') return hash;
+      if (hash === 'profile' || hash === 'templates' || hash === 'whatsapp') return hash;
     }
     return 'profile';
   });
@@ -361,6 +373,7 @@ export default function SettingsPage() {
         <div className="flex-1 min-w-0">
           {activeTab === 'profile'   && <ProfilePanel />}
           {activeTab === 'templates' && <InvoiceTemplatesPanel />}
+          {activeTab === 'whatsapp' && <WhatsAppDeliveryPanel />}
         </div>
       </div>
     </div>
