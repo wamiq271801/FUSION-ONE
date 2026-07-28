@@ -5,8 +5,8 @@
  * renders via the centralized invoice module, returns binary PDF.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { renderPdf } from '@/lib/invoice/renderers/pdf';
-import type { InvoiceData } from '@/lib/invoice/types';
+import { renderPdf } from '@/domains/invoice/renderers/pdf';
+import type { InvoiceData } from '@/domains/invoice/types';
 
 export async function POST(request: NextRequest) {
   try {

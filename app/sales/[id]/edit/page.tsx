@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { supabase } from '@/platform/supabase/client';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';

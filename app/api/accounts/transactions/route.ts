@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTransactions } from '@/server/services/accounts';
+import { getTransactions } from '@/platform/services/accounts';
 
 export async function GET(req: NextRequest) {
   try {

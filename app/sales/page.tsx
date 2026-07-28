@@ -3,18 +3,18 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { useStoreTemplates } from '@/hooks/useStoreTemplates';
-import { downloadInvoicePdf } from '@/lib/invoice/actions/client';
-import type { InvoiceData } from '@/lib/invoice/types';
+import { downloadInvoicePdf } from '@/domains/invoice/actions/client';
+import type { InvoiceData } from '@/domains/invoice/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Search, Plus, FileText, MoreVertical, FileDown, Share2, Printer, Ban, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useSalesPageData, fetchSaleDetail, buildSaleInvoiceData, receivePayment, cancelSale as cancelSaleMutation, useSalesInvalidation } from '@/features/sales';
+import { cn } from '@/shared/utils/utils';
+import { useSalesPageData, fetchSaleDetail, buildSaleInvoiceData, receivePayment, cancelSale as cancelSaleMutation, useSalesInvalidation } from '@/domains/sales';
 
 export default function SalesPage() {
   const router = useRouter();

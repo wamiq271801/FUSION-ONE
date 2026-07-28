@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { supabase } from '@/platform/supabase/client';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,7 +15,7 @@ import {
   ArrowDownToLine, ArrowLeftRight, History,
   ArrowUpRight, ArrowDownLeft,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils/utils';
 import {
   useAccountsPageData,
   useAccountsInvalidation,
@@ -25,8 +25,8 @@ import {
   type AccountBankAccount,
   type AccountPaymentMode,
   type TransactionRow,
-} from '@/features/accounts';
-import { formatINR, clampToFinancialYear } from '@/features/accounts/mutations';
+} from '@/domains/accounts';
+import { formatINR, clampToFinancialYear } from '@/domains/accounts/mutations';
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function AccountsPage() {

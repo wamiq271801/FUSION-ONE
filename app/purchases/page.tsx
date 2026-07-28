@@ -3,15 +3,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Search, Plus, FileText, MoreVertical, FileDown, Share2, Printer } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { usePurchasesPageData, payPurchase, usePurchasesInvalidation } from '@/features/purchases';
+import { cn } from '@/shared/utils/utils';
+import { usePurchasesPageData, payPurchase, usePurchasesInvalidation } from '@/domains/purchases';
 
 export default function PurchasesPage() {
   const router = useRouter();

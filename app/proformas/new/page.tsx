@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { supabase } from '@/platform/supabase/client';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,8 +13,8 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Modal } from '@/components/ui/Modal';
 import { Plus, Trash2, ArrowLeft, RefreshCw } from 'lucide-react';
-import { useFormData } from '@/hooks/use-form-data';
-import { getDeliverySettings } from '@/lib/invoice/delivery';
+import { useFormData } from '@/shared/hooks/use-form-data';
+import { getDeliverySettings } from '@/domains/invoice/delivery';
 
 
 interface ProformaItem {

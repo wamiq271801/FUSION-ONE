@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useFinancialYear, FinancialYear } from '@/components/providers/FinancialYearProvider';
+import { supabase } from '@/platform/supabase/client';
+import { useFinancialYear, FinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Check, Lock, Plus, ArrowRightLeft } from 'lucide-react';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { cn } from '@/lib/utils';
-import { createFinancialYear, setActiveFinancialYear } from '@/features/financial-years';
+import { useAuth } from '@/shared/providers/AuthProvider';
+import { cn } from '@/shared/utils/utils';
+import { createFinancialYear, setActiveFinancialYear } from '@/domains/financial-years';
 
 export default function FinancialYearPage() {
   const { financialYears, selectedYear, setSelectedYearId, isReadOnly, refresh } = useFinancialYear();

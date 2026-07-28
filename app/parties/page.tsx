@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { Button } from '@/components/ui/Button';
 import { PartyFormModal, Party } from '@/components/parties/PartyFormModal';
 import { Plus, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { usePartiesPageData, usePartiesInvalidation } from '@/features/parties';
+import { cn } from '@/shared/utils/utils';
+import { usePartiesPageData, usePartiesInvalidation } from '@/domains/parties';
 
 interface PartyLedger { partyId: string; salesTotal: number; salesDue: number; purchasesTotal: number; purchasesDue: number; }
 

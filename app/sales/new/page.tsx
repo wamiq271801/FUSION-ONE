@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,9 +12,9 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Plus, Trash2, ArrowLeft, Search, RefreshCw, Pencil } from 'lucide-react';
-import { useFormData, useInStockItems } from '@/hooks/use-form-data';
-import { createSale } from '@/features/sales/mutations';
-import { getDeliverySettings } from '@/lib/invoice/delivery';
+import { useFormData, useInStockItems } from '@/shared/hooks/use-form-data';
+import { createSale } from '@/domains/sales/mutations';
+import { getDeliverySettings } from '@/domains/invoice/delivery';
 
 interface SelectedSaleItem {
   id: string;
@@ -239,7 +239,7 @@ export default function NewSalePage() {
         try {
           const parsed = JSON.parse(pDataStr);
           if (parsed.proforma_id) {
-            const { supabase } = await import('@/lib/supabase');
+            const { supabase } = await import('@/platform/supabase/client');
             await supabase.from('proforma_invoices').update({ status: 'converted' }).eq('id', parsed.proforma_id);
           }
         } catch(e) { /* ignore */ }

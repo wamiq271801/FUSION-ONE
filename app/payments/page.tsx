@@ -1,12 +1,12 @@
-﻿'use client';
+'use client';
 
 import { useState, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { supabase } from '@/platform/supabase/client';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils/utils';
 import { Select } from '@/components/ui/Select';
 
 function PaymentsContent() {
@@ -88,7 +88,7 @@ function PaymentsContent() {
         <div className="p-3 border-b border-slate-100 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-            <input placeholder="Search by party or bill no…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            <input placeholder="Search by party or bill number" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               className="w-full h-8 pl-8 pr-3 text-xs border border-slate-200 rounded-lg bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
           </div>
           <Select
@@ -109,19 +109,19 @@ function PaymentsContent() {
               {tabData.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
                   <td className="px-4 py-2.5 text-xs text-slate-500 tabular-nums whitespace-nowrap">{p.date}</td>
-                  <td className="px-4 py-2.5 text-xs font-medium text-slate-900">{p.parties?.name || '—'}</td>
+                  <td className="px-4 py-2.5 text-xs font-medium text-slate-900">{p.parties?.name || '�'}</td>
                   <td className="px-4 py-2.5 text-xs">
                     {(isIn ? p.sales?.bill_number : p.purchases?.bill_number) ? (
                       <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border', isIn ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200')}>
                         {isIn ? p.sales.bill_number : p.purchases.bill_number}
                       </span>
-                    ) : <span className="text-slate-300">—</span>}
+                    ) : <span className="text-slate-300">�</span>}
                   </td>
                   <td className={cn('px-4 py-2.5 text-right text-xs font-semibold tabular-nums', isIn ? 'text-emerald-700' : 'text-rose-600')}>
                     {isIn ? '+' : '-'}{Number(p.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                   <td className="px-4 py-2.5">
-                    <div className="text-xs font-medium text-slate-700">{p.bank_accounts?.name || '—'}</div>
+                    <div className="text-xs font-medium text-slate-700">{p.bank_accounts?.name || '�'}</div>
                     {p.payment_modes?.name && <div className="text-[11px] text-slate-400">{p.payment_modes.name}</div>}
                   </td>
                 </tr>

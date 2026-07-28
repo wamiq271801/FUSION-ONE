@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,8 +11,8 @@ import { Select } from '@/components/ui/Select';
 import { Card, CardContent } from '@/components/ui/Card';
 import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Plus, Trash2, ArrowLeft } from 'lucide-react';
-import { useFormData } from '@/hooks/use-form-data';
-import { createPurchase } from '@/features/purchases/mutations';
+import { useFormData } from '@/shared/hooks/use-form-data';
+import { createPurchase } from '@/domains/purchases/mutations';
 
 interface PhoneItem {
   id: string; // temp id for UI list

@@ -3,18 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/platform/supabase/client';
 import {
   ArrowLeft, Pencil, Ban, Trash2, AlertTriangle, X, CheckCircle2,
 } from 'lucide-react';
 import {
   downloadInvoicePdf,
   downloadInvoicePng,
-} from '@/lib/invoice/actions/client';
-import { buildSaleInvoiceData } from '@/lib/invoice/builders';
+} from '@/domains/invoice/actions/client';
+import { buildSaleInvoiceData } from '@/domains/invoice/builders';
 import { InvoiceReview, InvoiceReviewSkeleton } from '@/components/invoice/InvoiceReview';
 import { InvoiceSidebar, SidebarButton } from '@/components/invoice/InvoiceSidebar';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { useStoreTemplates } from '@/hooks/useStoreTemplates';

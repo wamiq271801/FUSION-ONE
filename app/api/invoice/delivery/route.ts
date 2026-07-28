@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { renderInvoicePng } from '@/lib/invoice/renderers/png/export';
-import { whatsappManager } from '@/lib/whatsapp/manager';
-import type { InvoiceData } from '@/lib/invoice/types';
+import { renderInvoicePng } from '@/domains/invoice/renderers/png/export';
+import { whatsappManager } from '@/platform/whatsapp/manager';
+import type { InvoiceData } from '@/domains/invoice/types';
 
 export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {

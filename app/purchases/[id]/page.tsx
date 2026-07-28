@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/platform/supabase/client';
 import { ArrowLeft } from 'lucide-react';
 import {
   downloadInvoicePdf,
   downloadInvoicePng,
-} from '@/lib/invoice/actions/client';
-import { buildPurchaseInvoiceData } from '@/lib/invoice/builders';
+} from '@/domains/invoice/actions/client';
+import { buildPurchaseInvoiceData } from '@/domains/invoice/builders';
 import { InvoiceReview, InvoiceReviewSkeleton } from '@/components/invoice/InvoiceReview';
 import { InvoiceSidebar } from '@/components/invoice/InvoiceSidebar';
 import { useToast } from '@/components/ui/Toast';

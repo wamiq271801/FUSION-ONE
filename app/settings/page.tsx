@@ -2,21 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { supabase } from '@/platform/supabase/client';
+import { useAuth } from '@/shared/providers/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useStoreTemplates } from '@/hooks/useStoreTemplates';
-import type { TemplateVariant } from '@/lib/invoice/types';
+import type { TemplateVariant } from '@/domains/invoice/types';
 import type { InvoiceType } from '@/hooks/useStoreTemplates';
 import {
   Store, LogOut, Upload, Save, User, FileText, Check,
   ChevronRight, Layers, MessageCircle,
 } from 'lucide-react';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
-import { DELIVERY_SETTINGS_KEY, defaultDeliverySettings, type DeliverySettings } from '@/lib/invoice/delivery';
+import { cn } from '@/shared/utils/utils';
+import { DELIVERY_SETTINGS_KEY, defaultDeliverySettings, type DeliverySettings } from '@/domains/invoice/delivery';
 import { WhatsAppPlatformPanel } from '@/components/settings/WhatsAppPlatformPanel';
 
 // ─── Template Catalogue ─────────────────────────────────────────────────────

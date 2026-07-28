@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { whatsappManager } from '@/lib/whatsapp/manager';
-import type { SendMediaInput, SendTextInput } from '@/lib/whatsapp/types';
+import { whatsappManager } from '@/platform/whatsapp/manager';
+import type { SendMediaInput, SendTextInput } from '@/platform/whatsapp/types';
 export const runtime = 'nodejs';
 export async function POST(request: NextRequest) { const secret = process.env.WHATSAPP_INTERNAL_API_KEY; if (secret && request.headers.get('x-whatsapp-api-key') !== secret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); try { const body = await request.json() as ({ type: 'text' } & SendTextInput) | ({ type: 'media' } & SendMediaInput); if (body.type === 'text') { if (!body.to || !body.text) throw new Error('Recipient and text are required'); return NextResponse.json({ id: await whatsappManager.sendText(body) }); } if (body.type === 'media') { if (!body.to || !body.dataUri || !body.mimeType || !body.kind) throw new Error('Incomplete media message'); return NextResponse.json({ id: await whatsappManager.sendMedia(body) }); } throw new Error('Unsupported message type'); } catch (error: unknown) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Message failed' }, { status: 400 }); } }

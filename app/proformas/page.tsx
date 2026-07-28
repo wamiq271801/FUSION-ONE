@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { Button } from '@/components/ui/Button';
 import { Search, Plus, FileText, MoreVertical, FileDown, Share2, Printer } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useProformasPageData } from '@/features/proformas';
+import { cn } from '@/shared/utils/utils';
+import { useProformasPageData } from '@/domains/proformas';
 
 export default function ProformasPage() {
   const router = useRouter();

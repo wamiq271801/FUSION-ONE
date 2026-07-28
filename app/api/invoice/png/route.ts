@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { renderInvoicePng } from '@/lib/invoice/renderers/png/export';
-import type { InvoiceData } from '@/lib/invoice/types';
+import { renderInvoicePng } from '@/domains/invoice/renderers/png/export';
+import type { InvoiceData } from '@/domains/invoice/types';
 
 export async function POST(request: NextRequest) {
   try {

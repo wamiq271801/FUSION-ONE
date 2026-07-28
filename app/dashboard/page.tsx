@@ -1,7 +1,7 @@
 'use client';
 
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
-import { useDashboardData } from '@/features/dashboard';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
+import { useDashboardData } from '@/domains/dashboard';
 import Link from 'next/link';
 import {
   TrendingUp,
@@ -18,7 +18,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils/utils';
 
 
 

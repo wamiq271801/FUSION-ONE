@@ -2,21 +2,21 @@
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useFinancialYear } from '@/components/providers/FinancialYearProvider';
+import { supabase } from '@/platform/supabase/client';
+import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Plus, Search, Smartphone, Pencil } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils/utils';
 import {
   InventoryItem,
   useInventoryPageData,
   useInventoryInvalidation,
   validateInventoryForm,
-} from '@/features/inventory';
+} from '@/domains/inventory';
 
 const emptyForm = { brand: '', model: '', imei: '', ram_rom: '', color: '', purchase_price: '', base_selling_price: '' };
 

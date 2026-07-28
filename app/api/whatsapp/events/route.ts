@@ -1,4 +1,4 @@
-import { whatsappManager } from '@/lib/whatsapp/manager';
+import { whatsappManager } from '@/platform/whatsapp/manager';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

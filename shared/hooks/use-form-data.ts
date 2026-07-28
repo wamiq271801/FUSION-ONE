@@ -7,7 +7,7 @@
  * automatically if data is stale.
  */
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/platform/supabase/client';
 
 export function useFormData() {
   return useQuery({
