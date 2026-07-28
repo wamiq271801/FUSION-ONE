@@ -32,10 +32,10 @@ export default function AppShell({ user, children }: AppShellProps) {
       <QueryProvider>
         <SessionProvider user={user}>
           <FinancialYearProvider>
-            <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
-              <Sidebar />
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <Header />
+            <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans">
+              <Header />
+              <div className="flex flex-1 overflow-hidden">
+                <Sidebar />
                 <main className="flex-1 overflow-y-auto p-6 md:p-8">
                   <div className="max-w-7xl mx-auto w-full">{children}</div>
                 </main>

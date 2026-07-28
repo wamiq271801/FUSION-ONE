@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import { useToast } from '@/components/ui/Toast';
+import Image from 'next/image';
 import { Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
@@ -57,8 +58,15 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md relative z-10 p-2 shadow-xl border-slate-100">
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl mb-4 shadow-lg shadow-indigo-600/20 flex items-center justify-center">
-            <Lock className="text-white h-6 w-6" strokeWidth={2} />
+          <div className="mx-auto w-14 h-14 mb-3 relative">
+            <Image
+              src="/Logo_Rounded.png"
+              alt="FUSION ONE Logo"
+              width={56}
+              height={56}
+              className="w-14 h-14 rounded-xl object-contain shadow-md"
+              priority
+            />
           </div>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
             FUSION ONE

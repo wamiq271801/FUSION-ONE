@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Calendar, ChevronDown, AlertCircle, Lock } from 'lucide-react';
 import { useFinancialYear } from '@/shared/providers/FinancialYearProvider';
 import { cn } from '@/shared/utils/utils';
@@ -48,7 +49,20 @@ export default function Header() {
   return (
     <div className="flex flex-col shrink-0 z-20 w-full">
       <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6">
-        <div />
+        {/* Branding */}
+        <div className="flex items-center gap-2.5">
+          <Image
+            src="/Logo_Rounded.png"
+            alt="FUSION ONE Logo"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-lg shrink-0 object-contain"
+            priority
+          />
+          <span className="font-bold text-base text-slate-900 tracking-tight">
+            FUSION ONE
+          </span>
+        </div>
 
         <div className="flex items-center gap-3">
           {/* Read-only badge */}
