@@ -12,6 +12,9 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: 'FUSION ONE',
   description: 'FUSION ONE - Mobile Billing App',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
