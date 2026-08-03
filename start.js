@@ -1,18 +1,13 @@
-const https = require('https');
 const next = require('next');
-const fs = require('fs');
-const path = require('path');
-
-const CERT = fs.readFileSync(path.join(__dirname, '.proxy', 'cert.pem'));
-const KEY = fs.readFileSync(path.join(__dirname, '.proxy', 'key.pem'));
+const http = require('http');
 
 const app = next({ dev: false, dir: __dirname });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  https.createServer({ key: KEY, cert: CERT }, (req, res) => {
+  http.createServer((req, res) => {
     handle(req, res);
-  }).listen(443, () => {
-    console.log('https://fusion.one');
+  }).listen(5262, '127.0.0.1', () => {
+    console.log('http://localhost:5262');
   });
 });

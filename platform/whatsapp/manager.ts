@@ -8,7 +8,7 @@ import { prepareMedia } from './media';
 import { whatsappLog } from './logger';
 import type { Contact, SendMediaInput, SendTextInput, WhatsAppDiagnostics, WhatsAppState } from './types';
 
-const authDirectory = () => process.env.WHATSAPP_AUTH_DIR || path.join(process.cwd(), '.whatsapp-auth');
+const authDirectory = () => path.join(process.env.APPDATA || process.env.LOCALAPPDATA || process.cwd(), 'FUSION ONE', '.whatsapp-auth');
 const normalizeJid = (value: string) => value.includes('@') ? value : `${value.replace(/\D/g, '')}@s.whatsapp.net`;
 const initialState = (): WhatsAppState => ({ status: 'disconnected', qr: null, qrExpiresAt: null, connectedAt: null, authenticatedAt: null, phone: null, profileName: null, profilePhoto: null, lastError: null, lastSyncedAt: null, reconnectAttempts: 0, platformVersion: null, deliveryStatus: null, deliveryMessage: null, updatedAt: new Date().toISOString() });
 

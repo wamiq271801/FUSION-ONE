@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
     '@whiskeysockets/baileys',
   ],
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

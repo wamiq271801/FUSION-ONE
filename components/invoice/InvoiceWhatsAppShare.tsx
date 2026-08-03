@@ -1,19 +1,71 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, MessageCircle, RefreshCw, XCircle } from 'lucide-react';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MessageCircle, RefreshCw } from 'lucide-react';
 import type { InvoiceData } from '@/domains/invoice/types';
 import { getDeliverySettings, resolveDeliveryMessage } from '@/domains/invoice/delivery';
-import { Modal } from '@/components/ui/Modal';
-import { useWhatsAppPlatform } from '@/hooks/useWhatsAppPlatform';
+import { useToast } from '@/components/ui/Toast';
 
-const recentKey = 'fusion-one.whatsapp.recipients';
-const normalizePhone = (value: string) => { const normalized = value.replace(/[^\d+]/g, '').replace(/^00/, '+').replace(/^\+/, ''); if (!/^\d{8,15}$/.test(normalized)) throw new Error('Enter a valid phone number with country code'); return normalized; };
+const normalizePhone = (value: string) => value.replace(/[^\d]/g, '');
+
 export function InvoiceWhatsAppShare({ data }: { data: InvoiceData }) {
-  const [open, setOpen] = useState(false); const [number, setNumber] = useState(data.party?.number || ''); const [caption, setCaption] = useState(''); const [recent, setRecent] = useState<string[]>([]); const [commandError, setCommandError] = useState(''); const { state } = useWhatsAppPlatform();
-  useEffect(() => { try { setRecent(JSON.parse(localStorage.getItem(recentKey) || '[]')); } catch { setRecent([]); } }, []);
-  const message = useMemo(() => resolveDeliveryMessage(data, getDeliverySettings()[data.type === 'proforma' ? 'proforma' : 'sale'].template), [data]);
-  const stage = state?.deliveryStatus || 'idle'; const busy = ['preparing', 'generating', 'uploading', 'sending'].includes(stage); const failed = stage === 'failed'; const delivered = stage === 'delivered';
-  const send = async () => { try { const to = normalizePhone(number); setCommandError(''); const response = await fetch('/api/invoice/delivery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invoice: data, to, caption: caption.trim() || message }) }); const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Unable to queue invoice delivery'); const next = [to, ...recent.filter(item => item !== to)].slice(0, 5); setRecent(next); localStorage.setItem(recentKey, JSON.stringify(next)); } catch (error) { setCommandError(error instanceof Error ? error.message : 'Unable to send invoice'); } };
-  const buttonLabel = delivered ? 'Invoice sent' : failed ? 'Retry sending' : busy ? (state?.deliveryMessage || 'Sending…') : 'Send via WhatsApp'; const Icon = delivered ? CheckCircle2 : failed ? RefreshCw : busy ? RefreshCw : MessageCircle;
-  return <><div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm"><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">WhatsApp</p><button type="button" onClick={() => { setCommandError(''); setOpen(true); }} className="flex w-full items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2.5 text-xs font-semibold text-white"><MessageCircle className="h-3.5 w-3.5"/>Send via WhatsApp</button></div><Modal isOpen={open} onClose={() => !busy && setOpen(false)} title="Send via WhatsApp" description={`Invoice ${data.bill_number} will be sent as a PNG image.`} footer={<><button type="button" onClick={() => setOpen(false)} disabled={busy} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600">Cancel</button><button type="button" onClick={send} disabled={busy || delivered} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><Icon className={busy ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'}/>{buttonLabel}</button></>}><div className="space-y-3"><div><label className="mb-1 block text-xs font-medium text-slate-700">Recipient number</label><input value={number} onChange={event => setNumber(event.target.value)} disabled={busy} placeholder="Recipient number (+country code)" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-indigo-500" /></div>{recent.length > 0 && <div className="flex flex-wrap gap-1">{recent.map(item => <button type="button" key={item} disabled={busy} onClick={() => setNumber(item)} className="rounded-md bg-slate-100 px-1.5 py-1 text-[9px] text-slate-600">+{item}</button>)}</div>}<div><label className="mb-1 block text-xs font-medium text-slate-700">Message preview</label><textarea value={caption} onChange={event => setCaption(event.target.value)} disabled={busy} placeholder={message} rows={6} className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed outline-none focus:border-indigo-500"/></div><div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-500">{state?.deliveryMessage || 'A freshly generated invoice PNG will be attached.'}</div>{delivered && <p className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5"/>Sent successfully.</p>}{(failed || commandError) && <p className="flex items-center gap-1 text-xs text-rose-600"><XCircle className="h-3.5 w-3.5"/>{commandError || state?.deliveryMessage}</p>}</div></Modal></>;
+  const { success, error } = useToast();
+  const [isSending, setIsSending] = useState(false);
+  const deliveryType = data.type === 'proforma' ? 'proforma' : 'sale';
+  const caption = useMemo(
+    () => resolveDeliveryMessage(data, getDeliverySettings()[deliveryType].template),
+    [data, deliveryType],
+  );
+  const autoSendHandled = useRef(false);
+
+  const send = useCallback(async () => {
+    const to = normalizePhone(data.party?.number || '');
+    if (!/^\d{8,15}$/.test(to)) {
+      error('WhatsApp unavailable', 'The customer does not have a valid phone number.');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const response = await fetch('/api/invoice/delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice: data, to, caption }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to send invoice');
+      success('Invoice sent', `Invoice ${data.bill_number} was sent on WhatsApp.`);
+    } catch (cause) {
+      error('WhatsApp send failed', cause instanceof Error ? cause.message : 'Unable to send invoice');
+    } finally {
+      setIsSending(false);
+    }
+  }, [caption, data, error, success]);
+
+  useEffect(() => {
+    if (autoSendHandled.current) return;
+
+    const autoSendKey = 'fusion-one.whatsapp-auto-send';
+    if (sessionStorage.getItem(autoSendKey) !== `${deliveryType}:${data.bill_number}`) return;
+
+    // Consume the post-save request before sending so a re-render cannot deliver twice.
+    autoSendHandled.current = true;
+    sessionStorage.removeItem(autoSendKey);
+    void send();
+  }, [data.bill_number, deliveryType, send]);
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
+      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">WhatsApp</p>
+      <button
+        type="button"
+        onClick={send}
+        disabled={isSending}
+        className="flex w-full items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isSending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
+        {isSending ? 'Sending…' : 'Send via WhatsApp'}
+      </button>
+    </div>
+  );
 }
