@@ -8,38 +8,30 @@ CREATE TABLE IF NOT EXISTS whatsapp_settings (
   id                         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_user_id              UUID NOT NULL REFERENCES auth.users(id) UNIQUE,
   auto_send_sale             BOOLEAN NOT NULL DEFAULT false,
+  auto_send_purchase         BOOLEAN NOT NULL DEFAULT false,
   auto_send_proforma         BOOLEAN NOT NULL DEFAULT false,
   sale_message_template      TEXT NOT NULL DEFAULT
-    '*Invoice: {bill_number}*
-Dear {customer_name},
+    'Hello {{customer_name}},
 
-Thank you for shopping at *{store_name}*! 🙏
+Please find your invoice {{invoice_number}} from {{company_name}} attached.
 
-📱 *Items Purchased:*
-{item_list}
+Total: ₹{{grand_total}}
 
-💰 *Bill Summary:*
-Total: ₹{final_total}
-Paid: ₹{paid}
-Due: ₹{due}
+Thank you for your business.',
 
-📅 Date: {date}
+  purchase_message_template  TEXT NOT NULL DEFAULT
+    'Hello {{customer_name}},
 
-_For any queries, please contact us._',
+Please find your purchase bill {{invoice_number}} from {{company_name}} attached.
+
+Total: ₹{{grand_total}}',
 
   proforma_message_template  TEXT NOT NULL DEFAULT
-    '*Quotation: {bill_number}*
-Dear {customer_name},
+    'Hello {{customer_name}},
 
-Here is your quotation from *{store_name}*.
+Please find your quotation {{invoice_number}} from {{company_name}} attached.
 
-📋 *Items:*
-{item_list}
-
-💰 Total: ₹{final_total}
-📅 Date: {date}
-
-_Reply to confirm your order. Valid for 7 days._',
+Estimated Total: ₹{{grand_total}}',
 
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()

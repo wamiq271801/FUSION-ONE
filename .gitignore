@@ -2,9 +2,9 @@
 # 1. Packages & Dependencies
 # ==========================================
 node_modules/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
+bun.lock
 bun.lockb
 
 # ==========================================
@@ -56,3 +56,23 @@ Thumbs.db
 *.userossc
 *.sln.docstates
 
+# ==========================================
+# 8. WhatsApp Engine Session (wa-engine / whatsapp-web.js)
+#    The permanent Chromium profile lives in the OS application-data
+#    directory (e.g. %APPDATA%/FUSIONONE/whatsapp on Windows), not in the
+#    project. These ignore any stray local cache only.
+# ==========================================
+.wwebjs_auth/
+.wwebjs_cache/
+
+# ==========================================
+# 9. Internal Library (vendored — node_modules only)
+# ==========================================
+internal/whatsapp-web.js/node_modules/
+internal/whatsapp-web.js/bun.lock
+
+# ==========================================
+# 10. Sandbox Internal
+# ==========================================
+/skills/
+/upload/

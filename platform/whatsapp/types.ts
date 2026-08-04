@@ -1,6 +1,0 @@
-export type WhatsAppStatus = 'initializing' | 'loading' | 'waiting_for_qr' | 'qr_available' | 'qr_expired' | 'pairing' | 'authenticating' | 'syncing' | 'connected' | 'reconnecting' | 'disconnected' | 'logged_out' | 'authentication_failed' | 'error';
-export interface WhatsAppState { status: WhatsAppStatus; qr: string | null; qrExpiresAt: string | null; connectedAt: string | null; authenticatedAt: string | null; phone: string | null; profileName: string | null; profilePhoto: string | null; lastError: string | null; lastSyncedAt: string | null; reconnectAttempts: number; platformVersion: string | null; deliveryStatus: string | null; deliveryMessage: string | null; updatedAt: string; }
-export interface WhatsAppDiagnostics { uptimeSeconds: number; sessionAgeSeconds: number; reconnectAttempts: number; socketHealthy: boolean; authenticationHealthy: boolean; lastError: string | null; status: WhatsAppStatus; lastSyncedAt: string | null; }
-export interface Contact { id: string; name: string | null; notify: string | null; verifiedName: string | null; imageUrl: string | null; updatedAt: string; }
-export interface SendTextInput { to: string; text: string; quotedMessageId?: string; }
-export interface SendMediaInput { to: string; dataUri: string; mimeType: string; fileName?: string; caption?: string; quotedMessageId?: string; kind: 'image' | 'document'; }

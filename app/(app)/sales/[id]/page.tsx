@@ -230,16 +230,6 @@ export default function SaleViewPage() {
 
   return (
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 68px)' }}>
-      {/* ── Back button ── */}
-      <div className="flex-none pb-3">
-        <button
-          onClick={() => router.push('/sales')}
-          className="h-8 w-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-sm transition-all"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-      </div>
-
       {/* ── Cancellation banner ── */}
       {!isLoading && isCancelled && (
         <div className="flex-none flex items-center gap-3 bg-rose-50 border border-rose-200 rounded-xl px-5 py-3.5 mb-3">
@@ -283,7 +273,13 @@ export default function SaleViewPage() {
       {/* ── Content: Review + Sidebar ── */}
       <div className="flex gap-5 flex-1">
         {/* Invoice review */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative group shadow-2xl shadow-slate-200/50 rounded-lg overflow-hidden">
+          <button
+            onClick={() => router.push('/sales')}
+            className="absolute top-4 left-4 z-10 h-8 w-8 rounded-full bg-white/70 backdrop-blur-md border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-sm transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
           {isLoading
             ? <InvoiceReviewSkeleton />
             : sale && <InvoiceReview data={getInvoiceData()} status={sale.status} />

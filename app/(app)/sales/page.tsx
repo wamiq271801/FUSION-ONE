@@ -14,7 +14,8 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Search, Plus, FileText, MoreVertical, FileDown, Share2, Printer, Ban, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/shared/utils/utils';
-import { useSalesPageData, fetchSaleDetail, buildSaleInvoiceData, receivePayment, cancelSale as cancelSaleMutation, useSalesInvalidation } from '@/domains/sales';
+import { useSalesPageData, fetchSaleDetail, receivePayment, cancelSale as cancelSaleMutation, useSalesInvalidation } from '@/domains/sales';
+import { buildSaleInvoiceData } from '@/domains/invoice/builders';
 
 export default function SalesPage() {
   const router = useRouter();
@@ -76,7 +77,13 @@ export default function SalesPage() {
   }, []);
 
   const buildInvoiceData = (sale: any, detail: any): InvoiceData =>
-    buildSaleInvoiceData(sale, detail, templates.sale);
+    buildSaleInvoiceData({
+      sale,
+      items: detail.items,
+      tradeIns: detail.tradeIns,
+      store: detail.store,
+      template: templates.sale,
+    });
 
   const handleMenuOpen = async (e: React.MouseEvent, sale: any) => {
     e.stopPropagation();

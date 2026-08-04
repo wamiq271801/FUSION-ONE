@@ -13,6 +13,7 @@ import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useFormData } from '@/shared/hooks/use-form-data';
 import { createPurchase } from '@/domains/purchases/mutations';
+import { useWhatsAppDeliverySettings } from '@/hooks/useWhatsAppDeliverySettings';
 
 interface PhoneItem {
   id: string; // temp id for UI list
@@ -30,6 +31,7 @@ export default function NewPurchasePage() {
   const { selectedYear, isReadOnly, isLoading: fyLoading } = useFinancialYear();
   const { error, success } = useToast();
   const queryClient = useQueryClient();
+  const { settings: deliverySettings } = useWhatsAppDeliverySettings();
 
   const formDataQuery = useFormData();
   const parties = formDataQuery.data?.parties ?? [];
@@ -134,6 +136,7 @@ export default function NewPurchasePage() {
         });
 
         success('Success', `Purchase ${billNumber} created!`);
+        if (deliverySettings.purchase.autoSend) sessionStorage.setItem('fusion-one.whatsapp-auto-send', `purchase:${billNumber}`);
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['purchases-page', selectedYear.id] }),
           queryClient.invalidateQueries({ queryKey: ['inventory-page', selectedYear.id] }),

@@ -68,17 +68,14 @@ export default function PurchaseViewPage() {
 
   return (
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 68px)' }}>
-      <div className="flex-none pb-3">
-        <button
-          onClick={() => router.push('/purchases')}
-          className="h-8 w-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-sm transition-all"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-      </div>
-
       <div className="flex gap-5 flex-1">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative group shadow-2xl shadow-slate-200/50 rounded-lg overflow-hidden">
+          <button
+            onClick={() => router.push('/purchases')}
+            className="absolute top-4 left-4 z-10 h-8 w-8 rounded-full bg-white/70 backdrop-blur-md border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:shadow-sm transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
           {isLoading
             ? <InvoiceReviewSkeleton />
             : purchase && <InvoiceReview data={getInvoiceData()} status={purchase.status} />
@@ -92,6 +89,7 @@ export default function PurchaseViewPage() {
               onDownloadPng={handleDownloadPng}
               isPdfLoading={isPdfLoading}
               isPngLoading={isPngLoading}
+              invoiceData={getInvoiceData()}
             />
           </div>
         )}

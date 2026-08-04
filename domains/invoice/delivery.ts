@@ -1,12 +1,27 @@
 import type { InvoiceData } from './types';
 
-export type DeliverableInvoiceType = 'sale' | 'proforma';
-export const isDeliverableInvoice = (type: InvoiceData['type']): type is DeliverableInvoiceType => type === 'sale' || type === 'proforma';
-export interface DeliverySettings { sale: { autoSend: boolean; template: string }; proforma: { autoSend: boolean; template: string }; }
-export const DELIVERY_SETTINGS_KEY = 'fusion-one.whatsapp-delivery';
-export const defaultDeliverySettings: DeliverySettings = {
-  sale: { autoSend: false, template: 'Hello {{customer_name}},\n\nPlease find your invoice {{invoice_number}} dated {{invoice_date}} from {{company_name}} attached.\nGrand Total: {{grand_total}}\nPayment Status: {{payment_status}}' },
-  proforma: { autoSend: false, template: 'Hello {{customer_name}},\n\nPlease find your quotation {{invoice_number}} dated {{invoice_date}} from {{company_name}} attached.\nGrand Total: {{grand_total}}' },
-};
-export function getDeliverySettings(): DeliverySettings { if (typeof window === 'undefined') return defaultDeliverySettings; try { const saved = JSON.parse(localStorage.getItem(DELIVERY_SETTINGS_KEY) || '{}'); return { sale: { ...defaultDeliverySettings.sale, ...saved.sale }, proforma: { ...defaultDeliverySettings.proforma, ...saved.proforma } }; } catch { return defaultDeliverySettings; } }
-export function resolveDeliveryMessage(data: InvoiceData, template: string) { const paymentStatus = data.type === 'proforma' ? 'Quotation' : data.due > 0 ? 'Balance due' : 'Paid'; const values: Record<string, string> = { customer_name: data.party?.name || 'Customer', invoice_number: data.bill_number, invoice_date: data.date, company_name: data.store?.name || 'Fusion Gadgets', grand_total: `${Number(data.final_total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Rs.`, due_date: data.due > 0 ? data.date : '', payment_status: paymentStatus, company_phone: data.store?.phone || '', company_address: data.store?.address || '' }; return template.replace(/{{\s*([a-z_]+)\s*}}/g, (_, name) => values[name] ?? ''); }
+export type DeliverableInvoiceType = 'sale' | 'purchase' | 'proforma';
+export const isDeliverableInvoice = (type: InvoiceData['type']): type is DeliverableInvoiceType => type === 'sale' || type === 'purchase' || type === 'proforma';
+export interface DeliverySettings { sale: { autoSend: boolean; template: string }; purchase: { autoSend: boolean; template: string }; proforma: { autoSend: boolean; template: string }; }
+/**
+ * Render a delivery message template (stored in Supabase) against invoice data.
+ *
+ * This is a pure renderer — it contains no template strings. The template is
+ * always loaded from the database (see hooks/useWhatsAppDeliverySettings).
+ * Unrecognized placeholders resolve to an empty string.
+ */
+export function resolveDeliveryMessage(data: InvoiceData, template: string) {
+  const paymentStatus = data.type === 'proforma' ? 'Quotation' : data.due > 0 ? 'Balance due' : 'Paid';
+  const values: Record<string, string> = {
+    customer_name: data.party?.name || '',
+    invoice_number: data.bill_number,
+    invoice_date: data.date,
+    company_name: data.store?.name || '',
+    grand_total: Number(data.final_total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    due_date: data.due > 0 ? data.date : '',
+    payment_status: paymentStatus,
+    company_phone: data.store?.phone || '',
+    company_address: data.store?.address || '',
+  };
+  return template.replace(/{{\s*([a-z_]+)\s*}}/g, (_, name) => values[name] ?? '');
+}

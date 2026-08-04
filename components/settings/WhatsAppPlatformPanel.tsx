@@ -1,19 +1,182 @@
 'use client';
-import { useState } from 'react';
-import { CheckCircle2, Copy, Image as ImageIcon, Loader2, LogOut, MessageCircle, RefreshCw, Send, ShieldCheck, Smartphone, TriangleAlert } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CheckCircle2, LogOut, MessageCircle, RefreshCw, Smartphone, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
-import type { WhatsAppState } from '@/platform/whatsapp/types';
 import { useWhatsAppPlatform } from '@/hooks/useWhatsAppPlatform';
+import QRCode from 'qrcode';
 
-const label = (state?: WhatsAppState['status']) => (state || 'disconnected').replaceAll('_', ' ');
+/**
+ * WhatsApp Platform Panel — purely event-driven.
+ *
+ * All state comes from the engine via SSE (useWhatsAppPlatform hook).
+ * The panel NEVER polls, NEVER sets intervals, NEVER manually refreshes,
+ * and NEVER touches the WhatsApp transport (no _getClient, no Puppeteer).
+ *
+ * When NOT authenticated: shows Status + QR (pushed by the engine).
+ * When authenticated: shows Connected, Device information, Engine state,
+ * Queue information, and Logout.
+ * When error/disconnected: shows the error and a Restart button.
+ */
 export function WhatsAppPlatformPanel() {
-  const { success, error } = useToast(); const { state, diagnostics } = useWhatsAppPlatform(); const [number, setNumber] = useState(''); const [testText, setTestText] = useState('FUSION ONE WhatsApp platform test'); const [busy, setBusy] = useState(false);
-  const connect = async (restart = false) => { setBusy(true); try { const response = await fetch('/api/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(restart ? { action: 'restart' } : {}) }); if (!response.ok) throw new Error((await response.json()).error || 'Unable to connect'); } catch (cause) { error('WhatsApp unavailable', cause instanceof Error ? cause.message : 'Unable to connect'); } finally { setBusy(false); } };
-  const logout = async () => { setBusy(true); try { await fetch('/api/whatsapp', { method: 'DELETE' }); success('Logged out', 'The saved WhatsApp session was removed.'); } catch { error('Logout failed'); } finally { setBusy(false); } };
-  const validate = async () => { try { const response = await fetch('/api/whatsapp/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ number }) }); const result = await response.json(); if (!response.ok) throw new Error(result.error); result.valid ? success('Number is available on WhatsApp') : error('Number is not available on WhatsApp'); } catch (cause) { error('Validation failed', cause instanceof Error ? cause.message : undefined); } };
-  const test = async (kind: 'text' | 'image' | 'document') => { try { if (!number) throw new Error('Enter a destination number'); if (kind === 'text') { const r = await fetch('/api/whatsapp/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'text', to: number, text: testText }) }); if (!r.ok) throw new Error((await r.json()).error); } else { const dataUri = kind === 'image' ? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLJ8wAAAABJRU5ErkJggg==' : 'data:text/plain;base64,RlVTSU9OIE9ORSBXaGF0c0FwcCBwbGF0Zm9ybSB0ZXN0'; const mimeType = kind === 'image' ? 'image/png' : 'text/plain'; const r = await fetch('/api/whatsapp/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'media', kind, to: number, dataUri, mimeType, fileName: kind === 'image' ? 'test.png' : 'test.txt', caption: testText }) }); if (!r.ok) throw new Error((await r.json()).error); } success('Test sent', `WhatsApp ${kind} message sent.`); } catch (cause) { error('Test failed', cause instanceof Error ? cause.message : undefined); } };
-  const connected = state?.status === 'connected';
-  return <div className="space-y-5"><div><h2 className="text-sm font-semibold text-slate-900">WhatsApp Account</h2><p className="text-[11px] text-slate-400 mt-0.5">Pair, monitor, and verify the native WhatsApp connection.</p></div><div className="rounded-xl border border-slate-200 bg-white overflow-hidden"><div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5"><div className="flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5 text-indigo-600"/><span className="text-xs font-semibold text-slate-900">Connection</span></div><span className={connected ? 'rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700' : 'rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700'}>{label(state?.status)}</span></div><div className="p-5">{state?.qr && !connected ? <div className="flex flex-col items-center gap-3"><img src={state.qr} alt="WhatsApp pairing QR" className="h-56 w-56 rounded-lg border border-slate-200 p-2"/><p className="text-[11px] text-slate-500">Scan this code in WhatsApp linked devices.{state.qrExpiresAt && ` Refreshes automatically.`}</p></div> : connected ? <div className="flex items-center gap-4"><div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100 flex items-center justify-center">{state.profilePhoto ? <img src={state.profilePhoto} alt="WhatsApp profile" className="h-full w-full object-cover"/> : <Smartphone className="h-5 w-5 text-slate-400"/>}</div><div><p className="text-xs font-semibold text-slate-900">{state.profileName || 'WhatsApp account'}</p><p className="text-[11px] text-slate-500">+{state.phone}</p></div><CheckCircle2 className="ml-auto h-5 w-5 text-emerald-500"/></div> : <div className="text-center py-4"><Smartphone className="mx-auto h-7 w-7 text-slate-300"/><p className="mt-2 text-xs text-slate-500">Connect a WhatsApp account to enable delivery and platform tools.</p></div>}{state?.lastError && <p className="mt-3 flex items-center gap-1 text-[11px] text-rose-600"><TriangleAlert className="h-3 w-3"/>{state.lastError}</p>}</div><div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3"><Button size="sm" variant="outline" onClick={() => connect(true)} disabled={busy} className="gap-1.5 text-xs"><RefreshCw className={busy ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'}/>Refresh</Button>{connected ? <Button size="sm" variant="outline" onClick={logout} disabled={busy} className="gap-1.5 text-xs text-rose-600"><LogOut className="h-3.5 w-3.5"/>Logout</Button> : <Button size="sm" onClick={() => connect()} disabled={busy} className="gap-1.5 text-xs"><MessageCircle className="h-3.5 w-3.5"/>Connect Account</Button>}</div></div><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[['Session', diagnostics?.authenticationHealthy ? 'Healthy' : 'Not authenticated'], ['Socket', diagnostics?.socketHealthy ? 'Healthy' : 'Offline'], ['Reconnects', String(diagnostics?.reconnectAttempts || 0)], ['Last sync', state?.lastSyncedAt ? new Date(state.lastSyncedAt).toLocaleTimeString() : '—']].map(([title, value]) => <div key={title} className="rounded-xl border border-slate-200 bg-white p-3"><p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{title}</p><p className="mt-1 text-xs font-semibold text-slate-700">{value}</p></div>)}</div><div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3"><div className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-indigo-600"/><p className="text-xs font-semibold text-slate-900">Platform Tests</p></div><div className="grid gap-2 sm:grid-cols-[1fr_auto]"><Input value={number} onChange={event => setNumber(event.target.value)} placeholder="Test number with country code" className="text-xs"/><Button size="sm" variant="outline" onClick={validate} className="text-xs">Validate Number</Button></div><Input value={testText} onChange={event => setTestText(event.target.value)} placeholder="Test message" className="text-xs"/><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={!connected} onClick={() => test('text')} className="gap-1.5 text-xs"><Send className="h-3.5 w-3.5"/>Send Text</Button><Button size="sm" variant="outline" disabled={!connected} onClick={() => test('image')} className="gap-1.5 text-xs"><ImageIcon className="h-3.5 w-3.5"/>Send Image</Button><Button size="sm" variant="outline" disabled={!connected} onClick={() => test('document')} className="gap-1.5 text-xs"><Copy className="h-3.5 w-3.5"/>Send Document</Button></div></div></div>;
+    const { success, error } = useToast();
+    const snap = useWhatsAppPlatform();
+    const [busy, setBusy] = useState(false);
+
+    // The only lifecycle controls: restart (on error/disconnect) and logout (when connected).
+    // These call engine lifecycle methods — they are NOT manual refresh/connect.
+    const restart = async () => {
+        setBusy(true);
+        try {
+            await fetch('/api/whatsapp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'restart' }),
+            });
+            // The engine will push the new state via SSE — no manual refresh needed.
+        } catch (cause) {
+            error('Restart failed', cause instanceof Error ? cause.message : undefined);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const logout = async () => {
+        setBusy(true);
+        try {
+            await fetch('/api/whatsapp', { method: 'DELETE' });
+            success('Logged out', 'The saved WhatsApp session was removed.');
+            // The engine will push the new state via SSE.
+        } catch {
+            error('Logout failed');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const connected = snap?.engine === 'READY';
+    const showQr = snap?.qr != null && (snap!.engine === 'AUTHENTICATING' || snap!.engine === 'INITIALIZING');
+    const hasError = snap?.engine === 'ERROR' || snap?.engine === 'DISCONNECTED';
+
+    // The engine pushes the raw WhatsApp pairing string as snap.qr.
+    // Encode it to a scannable QR image using the qrcode library.
+    const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+    useEffect(() => {
+        if (!snap?.qr) { setQrDataUrl(null); return; }
+        let cancelled = false;
+        QRCode.toDataURL(snap.qr, { width: 512, margin: 2, errorCorrectionLevel: 'M' })
+            .then((url: string) => { if (!cancelled) setQrDataUrl(url); })
+            .catch(() => { if (!cancelled) setQrDataUrl(null); });
+        return () => { cancelled = true; };
+    }, [snap?.qr]);
+
+    return (
+        <div className="space-y-5">
+            <div>
+                <h2 className="text-sm font-semibold text-slate-900">WhatsApp Account</h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">Engine state is pushed live — no manual refresh needed.</p>
+            </div>
+
+            {/* Connection status — entirely driven by engine SSE */}
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+                    <div className="flex items-center gap-2">
+                        <MessageCircle className="h-3.5 w-3.5 text-indigo-600" />
+                        <span className="text-xs font-semibold text-slate-900">Connection</span>
+                    </div>
+                    <span className={connected
+                        ? 'rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700'
+                        : 'rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700'
+                    }>
+                        {snap?.engine ?? '—'}
+                    </span>
+                </div>
+
+                <div className="p-5">
+                    {/* QR code — shown when engine pushes it */}
+                    {showQr ? (
+                        <div className="flex flex-col items-center gap-3">
+                            <img src={qrDataUrl ?? undefined} alt="WhatsApp pairing QR" className="h-56 w-56 rounded-lg border border-slate-200 p-2" />
+                            <p className="text-[11px] text-slate-500">Scan this code in WhatsApp → Settings → Linked Devices.</p>
+                        </div>
+                    ) : connected ? (
+                        /* Connected — show device info from engine snapshot */
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100 flex items-center justify-center">
+                                <Smartphone className="h-5 w-5 text-slate-400" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold text-slate-900">{snap?.account?.pushname || 'WhatsApp account'}</p>
+                                <p className="text-[11px] text-slate-500">{snap?.account?.wid ?? ''}</p>
+                            </div>
+                            <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-500" />
+                        </div>
+                    ) : (
+                        /* Disconnected / initializing / error */
+                        <div className="text-center py-4">
+                            <Smartphone className="mx-auto h-7 w-7 text-slate-300" />
+                            <p className="mt-2 text-xs text-slate-500">
+                                {snap?.engine === 'INITIALIZING' ? 'Starting WhatsApp engine…' :
+                                 snap?.engine === 'DISCONNECTED' ? 'WhatsApp disconnected. Click restart to reconnect.' :
+                                 snap?.engine === 'ERROR' ? 'Engine error. Click restart to retry.' :
+                                 'Engine stopped. Click restart to start.'}
+                            </p>
+                        </div>
+                    )}
+                    {snap?.lastError && (
+                        <p className="mt-3 flex items-center gap-1 text-[11px] text-rose-600">
+                            <TriangleAlert className="h-3 w-3" />{snap.lastError}
+                        </p>
+                    )}
+                </div>
+
+                {/* Only show restart (on error/disconnect) or logout (when connected) */}
+                <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+                    {hasError || !connected ? (
+                        <Button size="sm" onClick={restart} disabled={busy} className="gap-1.5 text-xs">
+                            <RefreshCw className={busy ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />Restart Engine
+                        </Button>
+                    ) : null}
+                    {connected ? (
+                        <Button size="sm" variant="outline" onClick={logout} disabled={busy} className="gap-1.5 text-xs text-rose-600">
+                            <LogOut className="h-3.5 w-3.5" />Logout
+                        </Button>
+                    ) : null}
+                </div>
+            </div>
+
+            {/* Engine state — all from snapshot, no polling */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                    ['Engine', snap?.engine ?? '—'],
+                    ['Browser', snap?.browser ?? '—'],
+                    ['Auth', snap?.auth ?? '—'],
+                    ['Health', snap?.health ?? '—'],
+                ].map(([title, value]) => (
+                    <div key={title} className="rounded-xl border border-slate-200 bg-white p-3">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{title}</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-700">{value}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* Queue stats — from snapshot */}
+            {connected && snap?.queue && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    {[
+                        ['Pending', snap.queue.pending],
+                        ['Processing', snap.queue.processing],
+                        ['Completed', snap.queue.completed],
+                        ['Failed', snap.queue.failed],
+                        ['Total', snap.queue.total],
+                    ].map(([title, value]) => (
+                        <div key={title} className="rounded-xl border border-slate-200 bg-white p-3">
+                            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{title}</p>
+                            <p className="mt-1 text-xs font-semibold text-slate-700">{value}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 }

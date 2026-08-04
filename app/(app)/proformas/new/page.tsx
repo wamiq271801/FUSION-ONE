@@ -14,7 +14,7 @@ import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Modal } from '@/components/ui/Modal';
 import { Plus, Trash2, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useFormData } from '@/shared/hooks/use-form-data';
-import { getDeliverySettings } from '@/domains/invoice/delivery';
+import { useWhatsAppDeliverySettings } from '@/hooks/useWhatsAppDeliverySettings';
 
 
 interface ProformaItem {
@@ -37,6 +37,7 @@ export default function NewProformaPage() {
   const { selectedYear, isReadOnly, isLoading: fyLoading } = useFinancialYear();
   const { error, success } = useToast();
   const queryClient = useQueryClient();
+  const { settings: deliverySettings } = useWhatsAppDeliverySettings();
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -205,7 +206,7 @@ export default function NewProformaPage() {
       }
 
       success('Success', `Quotation ${pBillNo} created!`);
-      if (getDeliverySettings().proforma.autoSend) sessionStorage.setItem('fusion-one.whatsapp-auto-send', `proforma:${pBillNo}`);
+      if (deliverySettings.proforma.autoSend) sessionStorage.setItem('fusion-one.whatsapp-auto-send', `proforma:${pBillNo}`);
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['proformas-page', selectedYear.id] })

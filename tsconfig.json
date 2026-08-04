@@ -28,6 +28,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@internal/whatsapp-engine": [
+        "./internal/whatsapp-web.js/engine/index.ts"
+      ],
+      "@internal/whatsapp-web.js": [
+        "./internal/whatsapp-web.js/index.js"
       ]
     }
   },
@@ -40,6 +46,9 @@
   ],
   "exclude": [
     "node_modules",
-    "reference"
+    "reference",
+    "internal/whatsapp-web.js",
+    "skills",
+    "upload"
   ]
 }

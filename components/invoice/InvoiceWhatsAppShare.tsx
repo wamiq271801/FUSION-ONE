@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MessageCircle, RefreshCw } from 'lucide-react';
 import type { InvoiceData } from '@/domains/invoice/types';
-import { getDeliverySettings, resolveDeliveryMessage } from '@/domains/invoice/delivery';
+import { resolveDeliveryMessage } from '@/domains/invoice/delivery';
+import { useWhatsAppDeliverySettings } from '@/hooks/useWhatsAppDeliverySettings';
 import { useToast } from '@/components/ui/Toast';
 
 const normalizePhone = (value: string) => value.replace(/[^\d]/g, '');
@@ -11,14 +12,22 @@ const normalizePhone = (value: string) => value.replace(/[^\d]/g, '');
 export function InvoiceWhatsAppShare({ data }: { data: InvoiceData }) {
   const { success, error } = useToast();
   const [isSending, setIsSending] = useState(false);
-  const deliveryType = data.type === 'proforma' ? 'proforma' : 'sale';
+  // All three invoice types (sale / purchase / proforma) are deliverable and
+  // share the same engine pipeline; the type only selects the message template.
+  // The template always comes from Supabase — never from a hardcoded default.
+  const { settings, isLoading } = useWhatsAppDeliverySettings();
+  const deliveryType = data.type;
   const caption = useMemo(
-    () => resolveDeliveryMessage(data, getDeliverySettings()[deliveryType].template),
-    [data, deliveryType],
+    () => (settings[deliveryType].template ? resolveDeliveryMessage(data, settings[deliveryType].template) : null),
+    [data, settings, deliveryType],
   );
   const autoSendHandled = useRef(false);
 
   const send = useCallback(async () => {
+    if (!caption) {
+      error('WhatsApp unavailable', 'No message template is configured for this document. Please set one in Settings → WhatsApp Delivery.');
+      return;
+    }
     const to = normalizePhone(data.party?.number || '');
     if (!/^\d{8,15}$/.test(to)) {
       error('WhatsApp unavailable', 'The customer does not have a valid phone number.');
@@ -44,6 +53,9 @@ export function InvoiceWhatsAppShare({ data }: { data: InvoiceData }) {
 
   useEffect(() => {
     if (autoSendHandled.current) return;
+    // Wait for the Supabase template to load before auto-sending so the
+    // rendered caption (and any missing-template error) is based on the DB.
+    if (isLoading) return;
 
     const autoSendKey = 'fusion-one.whatsapp-auto-send';
     if (sessionStorage.getItem(autoSendKey) !== `${deliveryType}:${data.bill_number}`) return;
@@ -52,20 +64,21 @@ export function InvoiceWhatsAppShare({ data }: { data: InvoiceData }) {
     autoSendHandled.current = true;
     sessionStorage.removeItem(autoSendKey);
     void send();
-  }, [data.bill_number, deliveryType, send]);
+  }, [data.bill_number, deliveryType, send, isLoading]);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
-      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">WhatsApp</p>
+      <p className="mb-1 text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">WhatsApp</p>
       <button
         type="button"
         onClick={send}
-        disabled={isSending}
-        className="flex w-full items-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={isSending || isLoading}
+        className="flex w-full items-center gap-2.5 rounded-md bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isSending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
+        {isSending ? <RefreshCw className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5 shrink-0" />}
         {isSending ? 'Sending…' : 'Send via WhatsApp'}
       </button>
     </div>
   );
 }
+

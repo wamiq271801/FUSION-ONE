@@ -46,10 +46,10 @@ export function SidebarButton({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+        'w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
         variant === 'primary'
-          ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50',
+          ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+          : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50',
       )}
     >
       {loading
@@ -75,7 +75,7 @@ export function InvoiceSidebar({
     <div className="w-full space-y-3 pb-8 print:hidden">
       {/* ── Export Actions ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-3 space-y-2 shadow-sm">
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 px-0.5 mb-1">Export</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 px-0.5 mb-1">Export</p>
         <SidebarButton
           icon={FileDown}
           label={isPdfLoading ? 'Generating…' : 'Download PDF'}

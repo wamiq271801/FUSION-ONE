@@ -1,13 +1,15 @@
 'use client';
 
 /**
- * InvoiceReview — premium React UI for viewing invoice data.
+ * InvoiceReview — React UI for viewing invoice data, styled to mirror the
+ * Prestige PDF template: a single continuous document with a gold accent bar,
+ * hairline dividers, and a black/gold palette — not a stack of floating cards.
  *
  * Renders directly from InvoiceData — no PDF, no iframe.
  * PNG export is handled server-side via /api/invoice/png.
  */
 import React from 'react';
-import { Building2, Phone, Mail, MapPin, Hash, Calendar, User, CheckCircle2, AlertCircle, Clock, Ban } from 'lucide-react';
+import { Phone, Mail, MapPin, CheckCircle2, AlertCircle, Clock, Ban } from 'lucide-react';
 import { cn } from '@/shared/utils/utils';
 import type { InvoiceData } from '@/domains/invoice/types';
 
@@ -38,16 +40,6 @@ function numberToWords(num: number): string {
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function InfoRow({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start gap-2 text-xs">
-      <span className="text-slate-400 min-w-[72px] shrink-0 font-medium">{label}</span>
-      <span className="text-slate-700 font-semibold">{value}</span>
-    </div>
-  );
-}
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">{children}</p>
@@ -77,37 +69,43 @@ function StatusBadge({ status }: { status?: string }) {
 
 export function InvoiceReviewSkeleton() {
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="bg-white rounded-2xl border border-slate-200 p-5">
-        <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <div className="h-5 w-40 bg-slate-100 rounded" />
-            <div className="h-3 w-24 bg-slate-100 rounded" />
+    <div className="space-y-3 animate-pulse">
+      <div className="bg-white overflow-hidden">
+        <div className="h-1 bg-amber-300" />
+        <div className="p-5">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 bg-slate-100" />
+              <div className="space-y-2">
+                <div className="h-4 w-40 bg-slate-100 rounded" />
+                <div className="h-2.5 w-24 bg-slate-100 rounded" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-28 bg-slate-100 rounded" />
+              <div className="h-2.5 w-32 bg-slate-100 rounded" />
+            </div>
           </div>
-          <div className="h-8 w-28 bg-slate-100 rounded-lg" />
         </div>
       </div>
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-        <div className="h-3 w-16 bg-slate-100 rounded" />
-        <div className="h-4 w-48 bg-slate-100 rounded" />
-        <div className="h-3 w-32 bg-slate-100 rounded" />
-      </div>
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="h-8 bg-slate-50 border-b border-slate-100" />
+      <div className="bg-white overflow-hidden">
+        <div className="h-10 bg-slate-50 border-b border-slate-100" />
         {[...Array(3)].map((_, i) => (
           <div key={i} className="flex gap-4 px-4 py-3 border-b border-slate-50">
             <div className="h-3 w-6 bg-slate-100 rounded" />
             <div className="flex-1 h-3 bg-slate-100 rounded" />
-            <div className="h-3 w-12 bg-slate-100 rounded" />
-            <div className="h-3 w-16 bg-slate-100 rounded" />
+            <div className="h-3 w-14 bg-slate-100 rounded" />
+            <div className="h-3 w-20 bg-slate-100 rounded" />
+            <div className="h-3 w-20 bg-slate-100 rounded" />
           </div>
         ))}
+        <div className="p-4 flex justify-end">
+          <div className="h-8 w-48 bg-slate-900 rounded" />
+        </div>
       </div>
     </div>
   );
 }
-
-// ── Main Component ─────────────────────────────────────────────────────────
 
 export interface InvoiceReviewProps {
   data: InvoiceData;
@@ -117,105 +115,81 @@ export interface InvoiceReviewProps {
 export const InvoiceReview = function InvoiceReview({ data, status }: InvoiceReviewProps) {
   const { store, party, items, trade_ins, type } = data;
   const isProforma = type === 'proforma';
-  const typeLabel = isProforma ? 'Quotation' : type === 'sale' ? 'Tax Invoice' : 'Purchase Bill';
+  const title = isProforma ? 'QUOTATION' : type === 'sale' ? 'TAX INVOICE' : 'PURCHASE BILL';
   const totalDiscount = (data.item_discount ?? 0) + (data.additional_discount ?? 0);
 
   return (
-    <div className="space-y-3 pb-6">
+    <div className="bg-white border border-slate-200 shadow-sm overflow-hidden pb-6">
+      {/* Gold accent bar — Prestige signature */}
+      <div className="h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500" />
 
-      {/* ── Header card: Store + Invoice Meta ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Gold accent bar */}
-        <div className="h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500" />
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-4">
-            {/* Store info */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 overflow-hidden">
-                {store?.logo_url ? (
-                  <img src={store.logo_url} alt="Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                ) : (
-                  <span className="text-sm font-black text-white tracking-tight">
-                    {(store?.name || 'FG').slice(0, 2).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-900 truncate">{store?.name || 'Fusion Gadgets'}</p>
-                {store?.gstin && <p className="text-[10px] text-slate-400 font-mono">GSTIN: {store.gstin}</p>}
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
-                  {store?.phone && (
-                    <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                      <Phone className="h-2.5 w-2.5 text-amber-500" />{store.phone}
-                    </span>
-                  )}
-                  {store?.email && (
-                    <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                      <Mail className="h-2.5 w-2.5 text-amber-500" />{store.email}
-                    </span>
-                  )}
-                  {store?.address && (
-                    <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                      <MapPin className="h-2.5 w-2.5 text-amber-500" />{store.address.split('\n')[0]}
-                    </span>
-                  )}
-                </div>
-              </div>
+      {/* ── HEADER: Store + Contact ── */}
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between gap-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-11 w-11 bg-slate-900 flex items-center justify-center shrink-0 overflow-hidden">
+              {store?.logo_url ? (
+                <img src={store.logo_url} alt="Logo" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+              ) : (
+                <span className="text-sm font-black text-white tracking-tight">
+                  {(store?.name || 'FG').slice(0, 2).toUpperCase()}
+                </span>
+              )}
             </div>
-
-            {/* Invoice type label + status */}
-            <div className="text-right shrink-0">
-              <div className="inline-block bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg mb-1.5">
-                {typeLabel}
-              </div>
-              <StatusBadge status={status} />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-900 truncate tracking-tight">{store?.name || 'FUSION GADGETS'}</p>
+              {store?.gstin && <p className="text-[10px] text-slate-400 font-mono mt-0.5">GSTIN: {store.gstin}</p>}
             </div>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            {store?.phone && (
+              <span className="flex items-center gap-1.5 text-[10px] text-slate-500"><Phone className="h-2.5 w-2.5 text-amber-500 shrink-0" />{store.phone}</span>
+            )}
+            {store?.email && (
+              <span className="flex items-center gap-1.5 text-[10px] text-slate-500"><Mail className="h-2.5 w-2.5 text-amber-500 shrink-0" />{store.email}</span>
+            )}
+            {store?.address && (
+              <span className="flex items-center gap-1.5 text-[10px] text-slate-500 text-right"><MapPin className="h-2.5 w-2.5 text-amber-500 shrink-0" />{store.address.split('\n').join(', ')}</span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Invoice meta + Party info ── */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Invoice details */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-          <SectionLabel>Invoice Details</SectionLabel>
-          <div className="space-y-2">
+      {/* ── BILLING + INVOICE META ── */}
+      <div className="border-y border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2">
+          <div className="px-5 py-4">
+            <SectionLabel>{type === 'purchase' ? 'Received From' : 'Bill to'}</SectionLabel>
+            <p className="text-xs font-bold text-slate-800">{party?.name || 'Cash Customer'}</p>
+            {party?.address && <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{party.address.split('\n').join(', ')}</p>}
+            {party?.number && (
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[10px] text-slate-400">Contact No.</span>
+                <span className="text-[10px] text-slate-600 font-mono">{party.number}</span>
+              </div>
+            )}
+          </div>
+          <div className="px-5 py-4 sm:border-l border-slate-100">
+            <p className="text-sm font-black tracking-tight text-slate-900 mb-2">{title}</p>
             <div className="flex items-center gap-2">
-              <Hash className="h-3 w-3 text-amber-500 shrink-0" />
+              <span className="text-[10px] font-medium text-slate-400 min-w-[64px]">Invoice No.</span>
               <span className="text-xs font-bold text-slate-800 font-mono">{data.bill_number}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3 text-amber-500 shrink-0" />
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] font-medium text-slate-400 min-w-[64px]">Date</span>
               <span className="text-xs text-slate-600">{data.date}</span>
             </div>
-          </div>
-        </div>
-
-        {/* Party info */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-          <SectionLabel>{type === 'purchase' ? 'Received From' : 'Bill To'}</SectionLabel>
-          <div className="flex items-start gap-2">
-            <User className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-bold text-slate-800">{party?.name || 'Cash Customer'}</p>
-              {party?.number && <p className="text-[10px] text-slate-500 mt-0.5">{party.number}</p>}
-              {party?.address && <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">{party.address.split('\n')[0]}</p>}
-            </div>
+            <div className="mt-2.5"><StatusBadge status={status} /></div>
           </div>
         </div>
       </div>
 
-      {/* ── Items table ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="bg-slate-900 px-4 py-2.5 flex items-center gap-2">
-          <Building2 className="h-3 w-3 text-amber-400" />
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">Items</p>
-        </div>
-
-        {/* Table header */}
-        <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-2 px-4 py-2 bg-slate-50 border-b border-slate-100 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+      {/* ── ITEMS TABLE ── */}
+      <div className="px-5 py-4">
+        <SectionLabel>{type === 'purchase' ? 'Items Purchased' : 'Items Sold'}</SectionLabel>
+        <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-2 px-1 py-2 border-b-2 border-slate-900 text-[9px] font-bold uppercase tracking-wider text-slate-700">
           <span className="w-5">#</span>
-          <span>Description</span>
+          <span>Item Description</span>
           <span className="w-14 text-center">Qty</span>
           <span className="w-20 text-right">Rate (MRP)</span>
           <span className="w-20 text-right">Amount</span>
@@ -229,11 +203,11 @@ export const InvoiceReview = function InvoiceReview({ data, status }: InvoiceRev
             <div
               key={idx}
               className={cn(
-                'grid grid-cols-[auto_1fr_auto_auto_auto] gap-2 px-4 py-3 text-xs',
-                idx < items.length - 1 && 'border-b border-slate-100'
+                'grid grid-cols-[auto_1fr_auto_auto_auto] gap-2 px-1 py-2.5 text-xs items-center',
+                idx < items.length - 1 && 'border-b border-slate-100',
               )}
             >
-              <span className="w-5 text-slate-400 font-mono text-[10px] pt-0.5">{idx + 1}</span>
+              <span className="w-5 text-slate-400 font-mono text-[10px]">{idx + 1}</span>
               <div>
                 <p className="font-semibold text-slate-800 leading-tight">{desc}</p>
                 {detail && <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{detail}</p>}
@@ -249,13 +223,13 @@ export const InvoiceReview = function InvoiceReview({ data, status }: InvoiceRev
         })}
       </div>
 
-      {/* ── Trade-ins table ── */}
+      {/* ── TRADE-INS ── */}
       {trade_ins && trade_ins.length > 0 && (
-        <div className="bg-emerald-50 rounded-2xl border border-emerald-200 shadow-sm overflow-hidden">
-          <div className="bg-emerald-700 px-4 py-2.5">
-            <p className="text-[9px] font-black uppercase tracking-widest text-emerald-100">Trade-In</p>
+        <div className="mx-5 mb-4 border border-emerald-200 bg-emerald-50/40">
+          <div className="px-3 py-2 border-b border-emerald-100">
+            <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Trade-In</p>
           </div>
-          <div className="grid grid-cols-[auto_1fr_auto] gap-2 px-4 py-2 bg-emerald-50 border-b border-emerald-100 text-[9px] font-bold uppercase tracking-wider text-emerald-600">
+          <div className="grid grid-cols-[auto_1fr_auto] gap-2 px-3 py-1.5 border-b border-emerald-100 text-[9px] font-bold uppercase tracking-wider text-emerald-600">
             <span className="w-5">#</span>
             <span>Device</span>
             <span className="w-24 text-right">Credit</span>
@@ -267,11 +241,11 @@ export const InvoiceReview = function InvoiceReview({ data, status }: InvoiceRev
               <div
                 key={idx}
                 className={cn(
-                  'grid grid-cols-[auto_1fr_auto] gap-2 px-4 py-3 text-xs',
-                  idx < trade_ins.length - 1 && 'border-b border-emerald-100'
+                  'grid grid-cols-[auto_1fr_auto] gap-2 px-3 py-2 text-xs items-center',
+                  idx < trade_ins.length - 1 && 'border-b border-emerald-100',
                 )}
               >
-                <span className="w-5 text-emerald-400 font-mono text-[10px] pt-0.5">{idx + 1}</span>
+                <span className="w-5 text-emerald-400 font-mono text-[10px]">{idx + 1}</span>
                 <div>
                   <p className="font-semibold text-emerald-800 leading-tight">{desc}</p>
                   {ti.imei && <p className="text-[10px] text-emerald-600 font-mono mt-0.5">IMEI: {ti.imei}</p>}
@@ -283,15 +257,12 @@ export const InvoiceReview = function InvoiceReview({ data, status }: InvoiceRev
         </div>
       )}
 
-      {/* ── Totals + Amount in Words ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      {/* ── TOTALS + AMOUNT IN WORDS ── */}
+      <div className="px-5 pt-2">
         <div className="flex flex-col sm:flex-row gap-5 sm:gap-8">
-          {/* Amount in words */}
           <div className="flex-1">
             <SectionLabel>Amount in Words</SectionLabel>
-            <p className="text-xs italic text-slate-600 leading-relaxed">
-              {numberToWords(Math.round(data.final_total))}
-            </p>
+            <p className="text-xs italic text-slate-600 leading-relaxed">{numberToWords(Math.round(data.final_total))}</p>
             <div className="mt-4 pt-4 border-t border-slate-100">
               <SectionLabel>Terms &amp; Conditions</SectionLabel>
               <ul className="space-y-0.5">
@@ -302,76 +273,47 @@ export const InvoiceReview = function InvoiceReview({ data, status }: InvoiceRev
             </div>
           </div>
 
-          {/* Totals */}
           <div className="w-full sm:w-56 space-y-1.5">
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>Subtotal</span><span className="font-mono">{fmt(data.subtotal)}</span>
-            </div>
+            <div className="flex justify-between text-xs text-slate-500"><span>Subtotal</span><span className="font-mono">{fmt(data.subtotal)}</span></div>
 
             {(data.item_discount ?? 0) > 0 && (data.additional_discount ?? 0) > 0 && (
-              <div className="flex justify-between text-xs text-slate-500">
-                <span>Product Discount</span>
-                <span className="font-mono text-rose-500">− {fmt(data.item_discount!)}</span>
-              </div>
+              <div className="flex justify-between text-xs text-slate-500"><span>Product Discount</span><span className="font-mono text-rose-500">− {fmt(data.item_discount!)}</span></div>
             )}
-
             {(data.additional_discount ?? 0) > 0 && (
-              <div className="flex justify-between text-xs text-slate-500">
-                <span>Additional Discount</span>
-                <span className="font-mono text-rose-500">− {fmt(data.additional_discount!)}</span>
-              </div>
+              <div className="flex justify-between text-xs text-slate-500"><span>Additional Discount</span><span className="font-mono text-rose-500">− {fmt(data.additional_discount!)}</span></div>
             )}
-
             {totalDiscount > 0 && (
-              <div className="flex justify-between text-xs font-semibold text-slate-600">
-                <span>Total Discount</span>
-                <span className="font-mono text-rose-500">− {fmt(totalDiscount)}</span>
-              </div>
+              <div className="flex justify-between text-xs font-semibold text-slate-600"><span>Total Discount</span><span className="font-mono text-rose-500">− {fmt(totalDiscount)}</span></div>
             )}
-
             {(data.trade_in_credit ?? 0) > 0 && (
-              <div className="flex justify-between text-xs text-emerald-600">
-                <span>Trade-In</span>
-                <span className="font-mono">− {fmt(data.trade_in_credit!)}</span>
-              </div>
+              <div className="flex justify-between text-xs text-emerald-600"><span>Trade-In</span><span className="font-mono">− {fmt(data.trade_in_credit!)}</span></div>
             )}
 
-            {/* Grand total */}
-            <div className="flex justify-between items-center bg-slate-900 text-white rounded-xl px-3 py-2.5 mt-2">
-              <span className="text-[10px] font-black uppercase tracking-widest">Grand Total</span>
+            <div className="h-px bg-slate-900 mt-2 mb-1.5" />
+            <div className="flex justify-between items-center bg-slate-900 text-white px-3 py-2.5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Grand Total</span>
               <span className="text-sm font-bold font-mono text-amber-400">{fmt(data.final_total)}</span>
             </div>
 
             {!isProforma && (
-              <>
-                <div className="pt-1 border-t border-slate-100 space-y-1.5">
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span>Amount Received</span><span className="font-mono">{fmt(data.paid)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-800">
-                    <span>Balance Due</span>
-                    <span className={cn('font-mono', data.due > 0 ? 'text-rose-600' : 'text-emerald-600')}>
-                      {fmt(data.due)}
-                    </span>
-                  </div>
+              <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                <div className="flex justify-between text-xs text-slate-500"><span>Amount Received</span><span className="font-mono">{fmt(data.paid)}</span></div>
+                <div className="flex justify-between text-xs font-semibold text-slate-800">
+                  <span>Balance Due</span>
+                  <span className={cn('font-mono', data.due > 0 ? 'text-rose-600' : 'text-emerald-600')}>{fmt(data.due)}</span>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Signature ── */}
+      {/* ── SIGNATURE ── */}
       {store?.signature_url && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex justify-end">
-          <div className="text-center w-36">
+        <div className="px-5 pt-6 pb-2 flex justify-end">
+          <div className="text-center w-40">
             <p className="text-[9px] text-slate-400 mb-3 text-left">For {store.name || 'Fusion Gadgets'}</p>
-            <img
-              src={store.signature_url}
-              alt="Signature"
-              className="w-24 h-10 object-contain mx-auto mb-2"
-              referrerPolicy="no-referrer"
-            />
+            <img src={store.signature_url} alt="Signature" className="w-28 h-11 object-contain mx-auto mb-2" referrerPolicy="no-referrer" />
             <div className="border-t border-slate-900 pt-1.5">
               <p className="text-[9px] font-bold text-slate-800 uppercase tracking-wider">{store.name}</p>
               <p className="text-[8px] text-slate-400">Authorized Signatory</p>
@@ -379,6 +321,13 @@ export const InvoiceReview = function InvoiceReview({ data, status }: InvoiceRev
           </div>
         </div>
       )}
+
+      {/* ── FOOTER ── */}
+      <div className="px-5 pt-3 border-t border-slate-100">
+        <p className="text-[9px] text-slate-400 font-medium">{store?.name || 'Fusion Gadgets'}</p>
+        <p className="text-[8px] text-slate-300 mt-0.5">This is a computer-generated invoice. No signature required if digitally authenticated.</p>
+      </div>
     </div>
   );
 };
+

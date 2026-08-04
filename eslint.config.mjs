@@ -11,6 +11,14 @@ export default [
     },
   },
   {
-    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"],
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+      "internal/whatsapp-web.js/**",
+      "skills/**",
+      "upload/**",
+    ],
   },
 ];

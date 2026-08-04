@@ -17,4 +17,3 @@ export * from './accounts';
 export * from './parties';
 export * from './financial-years';
 export * from './dashboard';
-export * from './settings';

@@ -14,7 +14,7 @@ import { PartyFormModal } from '@/components/parties/PartyFormModal';
 import { Plus, Trash2, ArrowLeft, Search, RefreshCw, Pencil } from 'lucide-react';
 import { useFormData, useInStockItems } from '@/shared/hooks/use-form-data';
 import { createSale } from '@/domains/sales/mutations';
-import { getDeliverySettings } from '@/domains/invoice/delivery';
+import { useWhatsAppDeliverySettings } from '@/hooks/useWhatsAppDeliverySettings';
 
 interface SelectedSaleItem {
   id: string;
@@ -44,6 +44,7 @@ export default function NewSalePage() {
   const { selectedYear, isReadOnly, isLoading: fyLoading } = useFinancialYear();
   const { error, success } = useToast();
   const queryClient = useQueryClient();
+  const { settings: deliverySettings } = useWhatsAppDeliverySettings();
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -232,7 +233,7 @@ export default function NewSalePage() {
       });
 
       success('Success', `Sale ${billNumber} recorded!`);
-      if (getDeliverySettings().sale.autoSend) sessionStorage.setItem('fusion-one.whatsapp-auto-send', `sale:${billNumber}`);
+      if (deliverySettings.sale.autoSend) sessionStorage.setItem('fusion-one.whatsapp-auto-send', `sale:${billNumber}`);
 
       const pDataStr = sessionStorage.getItem('convert_proforma');
       if (pDataStr) {

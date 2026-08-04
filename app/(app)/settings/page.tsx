@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/shared/utils/utils';
-import { DELIVERY_SETTINGS_KEY, defaultDeliverySettings, type DeliverySettings } from '@/domains/invoice/delivery';
+import type { DeliverySettings } from '@/domains/invoice/delivery';
 import { WhatsAppPlatformPanel } from '@/components/settings/WhatsAppPlatformPanel';
 
 // ─── Template Catalogue ─────────────────────────────────────────────────────
@@ -109,12 +109,72 @@ function InvoiceTemplatesPanel() {
 // ─── Profile Panel ─────────────────────────────────────────────────────────
 
 function WhatsAppDeliveryPanel() {
-  const { success } = useToast();
-  const [settings, setSettings] = useState<DeliverySettings>(defaultDeliverySettings);
-  useEffect(() => { try { const saved = JSON.parse(localStorage.getItem(DELIVERY_SETTINGS_KEY) || '{}'); setSettings({ sale: { ...defaultDeliverySettings.sale, ...saved.sale }, proforma: { ...defaultDeliverySettings.proforma, ...saved.proforma } }); } catch { setSettings(defaultDeliverySettings); } }, []);
-  const save = () => { localStorage.setItem(DELIVERY_SETTINGS_KEY, JSON.stringify(settings)); success('Saved', 'WhatsApp delivery preferences updated'); };
-  const fields = [{ type: 'sale' as const, label: 'Sales Invoice' }, { type: 'proforma' as const, label: 'Quotation / Proforma' }];
-  return <div className="space-y-5"><WhatsAppPlatformPanel /><div><h2 className="text-sm font-semibold text-slate-900">WhatsApp Delivery</h2><p className="text-[11px] text-slate-400 mt-0.5">Configure customer invoice messages and automatic delivery.</p></div>{fields.map(({ type, label }) => <div key={type} className="rounded-xl border border-slate-200 bg-white overflow-hidden"><div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5"><div><p className="text-xs font-semibold text-slate-900">{label}</p><p className="text-[11px] text-slate-400">Sent only to the customer number for this document.</p></div><label className="flex items-center gap-2 text-xs font-medium text-slate-700"><input type="checkbox" checked={settings[type].autoSend} onChange={event => setSettings(current => ({ ...current, [type]: { ...current[type], autoSend: event.target.checked } }))} className="h-4 w-4 accent-indigo-600" />Auto Send</label></div><div className="p-5 space-y-2"><label className="text-xs font-medium text-slate-700">Message template</label><textarea value={settings[type].template} onChange={event => setSettings(current => ({ ...current, [type]: { ...current[type], template: event.target.value } }))} rows={6} className="w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed outline-none focus:border-indigo-500" /><div className="rounded-lg bg-slate-50 p-3 text-xs whitespace-pre-wrap text-slate-600">{settings[type].template.replace(/{{\s*customer_name\s*}}/g, 'Alex').replace(/{{\s*invoice_number\s*}}/g, 'INV-2026-0001').replace(/{{\s*invoice_date\s*}}/g, '28 Jul 2026').replace(/{{\s*company_name\s*}}/g, 'Fusion Gadgets').replace(/{{\s*grand_total\s*}}/g, '25,000.00 Rs.').replace(/{{\s*payment_status\s*}}/g, 'Paid').replace(/{{\s*(due_date|company_phone|company_address)\s*}}/g, '')}</div><p className="text-[10px] text-slate-400">Variables: {'{{customer_name}}'}, {'{{invoice_number}}'}, {'{{invoice_date}}'}, {'{{company_name}}'}, {'{{grand_total}}'}, {'{{due_date}}'}, {'{{payment_status}}'}, {'{{company_phone}}'}, {'{{company_address}}'}</p></div></div>)}<div className="flex justify-end"><Button size="sm" onClick={save} className="gap-1.5 text-xs h-8 bg-indigo-600 hover:bg-indigo-700"><Save className="h-3.5 w-3.5" />Save Delivery Settings</Button></div></div>;
+  const { success, error } = useToast();
+  const { user } = useSession();
+  const queryClient = useQueryClient();
+  const [settings, setSettings] = useState<DeliverySettings>({
+    sale: { autoSend: false, template: '' },
+    purchase: { autoSend: false, template: '' },
+    proforma: { autoSend: false, template: '' },
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Map a whatsapp_settings row (snake_case DB columns) to the app's
+  // DeliverySettings shape. There is NO hardcoded template fallback — if a
+  // row is missing, the fields stay empty and the user supplies templates.
+  const rowToSettings = (row: Record<string, unknown> | null): DeliverySettings => ({
+    sale:     { autoSend: Boolean(row?.auto_send_sale),     template: typeof row?.sale_message_template === 'string' ? row.sale_message_template : '' },
+    purchase: { autoSend: Boolean(row?.auto_send_purchase), template: typeof row?.purchase_message_template === 'string' ? row.purchase_message_template : '' },
+    proforma: { autoSend: Boolean(row?.auto_send_proforma), template: typeof row?.proforma_message_template === 'string' ? row.proforma_message_template : '' },
+  });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error: dbErr } = await supabase
+          .from('whatsapp_settings')
+          .select('auto_send_sale, auto_send_purchase, auto_send_proforma, sale_message_template, purchase_message_template, proforma_message_template')
+          .eq('owner_user_id', user.id)
+          .maybeSingle();
+        if (dbErr) throw dbErr;
+        if (!cancelled) setSettings(rowToSettings(data));
+      } catch {
+        // No fallback template — keep the current (empty) fields on load error.
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const save = async () => {
+    if (!user?.id) return;
+    setIsSaving(true);
+    try {
+      const { error: dbErr } = await supabase
+        .from('whatsapp_settings')
+        .upsert({
+          owner_user_id: user.id,
+          auto_send_sale: settings.sale.autoSend,
+          sale_message_template: settings.sale.template,
+          auto_send_purchase: settings.purchase.autoSend,
+          purchase_message_template: settings.purchase.template,
+          auto_send_proforma: settings.proforma.autoSend,
+          proforma_message_template: settings.proforma.template,
+        }, { onConflict: 'owner_user_id' });
+      if (dbErr) throw dbErr;
+      // Invalidate so newly sent invoices immediately pick up these templates.
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-delivery-settings', user.id] });
+      success('Saved', 'WhatsApp delivery preferences updated');
+    } catch (err) {
+      error('Save failed', err instanceof Error ? err.message : 'Unable to save WhatsApp delivery preferences');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  const fields = [{ type: 'sale' as const, label: 'Sales Invoice' }, { type: 'purchase' as const, label: 'Purchase Bill' }, { type: 'proforma' as const, label: 'Quotation / Proforma' }];
+  return <div className="space-y-5"><WhatsAppPlatformPanel /><div><h2 className="text-sm font-semibold text-slate-900">WhatsApp Delivery</h2><p className="text-[11px] text-slate-400 mt-0.5">Configure customer invoice messages and automatic delivery.</p></div>{fields.map(({ type, label }) => <div key={type} className="rounded-xl border border-slate-200 bg-white overflow-hidden"><div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5"><div><p className="text-xs font-semibold text-slate-900">{label}</p><p className="text-[11px] text-slate-400">Sent only to the customer number for this document.</p></div><label className="flex items-center gap-2 text-xs font-medium text-slate-700"><input type="checkbox" checked={settings[type].autoSend} onChange={event => setSettings(current => ({ ...current, [type]: { ...current[type], autoSend: event.target.checked } }))} className="h-4 w-4 accent-indigo-600" />Auto Send</label></div><div className="p-5 space-y-2"><label className="text-xs font-medium text-slate-700">Message template</label><textarea value={settings[type].template} onChange={event => setSettings(current => ({ ...current, [type]: { ...current[type], template: event.target.value } }))} rows={6} className="w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-xs leading-relaxed outline-none focus:border-indigo-500" /><div className="rounded-lg bg-slate-50 p-3 text-xs whitespace-pre-wrap text-slate-600">{settings[type].template}</div><p className="text-[10px] text-slate-400">Variables: {'{{customer_name}}'}, {'{{invoice_number}}'}, {'{{invoice_date}}'}, {'{{company_name}}'}, {'{{grand_total}}'}, {'{{due_date}}'}, {'{{payment_status}}'}, {'{{company_phone}}'}, {'{{company_address}}'}</p></div></div>)}<div className="flex justify-end"><Button size="sm" onClick={save} disabled={isSaving} className="gap-1.5 text-xs h-8 bg-indigo-600 hover:bg-indigo-700"><Save className={isSaving ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />Save Delivery Settings</Button></div></div>;
 }
 
 function ProfilePanel() {
@@ -323,13 +383,12 @@ const SIDEBAR_ITEMS: { id: ActiveTab; label: string; icon: any }[] = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.slice(1);
-      if (hash === 'profile' || hash === 'templates' || hash === 'whatsapp') return hash;
-    }
-    return 'profile';
-  });
+  const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
+
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash === 'profile' || hash === 'templates' || hash === 'whatsapp') setActiveTab(hash);
+  }, []);
 
   useEffect(() => {
     window.location.hash = activeTab;

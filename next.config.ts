@@ -1,20 +1,31 @@
 import type { NextConfig } from 'next';
+import path from 'node:path';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   typescript: {
     ignoreBuildErrors: false,
   },
-  /**
-   * Tell Next.js (Turbopack or webpack) NOT to bundle these packages.
-   * They contain native .node binaries or pure ESM builds that must be
-   * required at runtime on the server — not statically analyzed.
-   */
+  allowedDevOrigins: ['*.space-z.ai'],
   serverExternalPackages: [
     '@napi-rs/canvas',
     '@react-pdf/renderer',
-    '@whiskeysockets/baileys',
+    'puppeteer',
   ],
+  turbopack: {
+    resolveAlias: {
+      '@internal/whatsapp-engine': './internal/whatsapp-web.js/engine/index.ts',
+      '@internal/whatsapp-web.js': './internal/whatsapp-web.js/index.js',
+    },
+  },
+  webpack: (config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.alias = config.resolve.alias || {};
+    const alias = config.resolve.alias as Record<string, string>;
+    alias['@internal/whatsapp-engine'] = path.resolve(__dirname, 'internal/whatsapp-web.js/engine/index.ts');
+    alias['@internal/whatsapp-web.js'] = path.resolve(__dirname, 'internal/whatsapp-web.js/index.js');
+    return config;
+  },
   images: {
     unoptimized: true,
     remotePatterns: [
